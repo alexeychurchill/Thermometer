@@ -82,11 +82,11 @@ uint8_t FORCE_INLINE gpio_read(GPIO_TypeDef* gpio, uint8_t pin) {
 }
 
 void FORCE_INLINE gpio_set(GPIO_TypeDef* gpio, uint8_t pin) { 
-    gpio -> BSRR |= GPIO_PIN_BIT(pin);
+    gpio -> BSRR = GPIO_PIN_BIT(pin);
 }
 
 void FORCE_INLINE gpio_reset(GPIO_TypeDef* gpio, uint8_t pin) {
-    gpio -> BRR |= GPIO_PIN_BIT(pin);
+    gpio -> BRR = GPIO_PIN_BIT(pin);
 }
 
 #endif
