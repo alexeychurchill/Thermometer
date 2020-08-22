@@ -35,7 +35,7 @@ OBJ = $(addprefix $(DIR_OBJ)/, $(SRC:%.c=%.o))
 OBJ += $(addprefix $(DIR_OBJ)/, $(CMSIS_SRC_AS:%.s=%.o))
 
 
-.PHONY: clean
+.PHONY: clean all
 
 $(DIR_OBJ)/%.o: %.c
 	mkdir -p $(dir $@)
@@ -57,3 +57,5 @@ flash:
 
 clean: 
 	rm -rf ./build
+
+all: build

@@ -12,6 +12,36 @@
 #define LED_PIN_CONFIG (GPIO_CRH_MODE13_1 | GPIO_CRH_MODE13_0)
 
 
+// #define PULSE_COUNT 9
+
+// #define WRITE_SLOT_LEN 70
+// #define WRITE_SLOT_LOW 65
+// #define WRITE_SLOT_HI 13
+// #define WRITE_SLOT_NONE 0
+
+// static const uint16_t pwm_pulses[PULSE_COUNT] = { 
+//     WRITE_SLOT_LOW, 
+//     WRITE_SLOT_LOW, 
+//     WRITE_SLOT_HI, 
+//     WRITE_SLOT_LOW, 
+
+//     WRITE_SLOT_LOW, 
+//     WRITE_SLOT_HI, 
+//     WRITE_SLOT_HI, 
+//     WRITE_SLOT_LOW, 
+//     WRITE_SLOT_NONE
+// };
+
+typedef enum DS18B20_State {
+    DS_NONE = 0,
+    DS_RESET, 
+    DS_SKIP_ROM, 
+    DS_CONVERT_T
+} DS18B20_State_t;
+
+static volatile DS18B20_State_t ds_state = DS_NONE; 
+
+
 volatile uint64_t sys_ticks = 0UL;
 
 void delay_ms(const uint32_t ms);
@@ -27,6 +57,23 @@ uint32_t stopwatch_time();
 void SysTick_Handler(void) {
     sys_ticks++;
 }
+
+// void DMA1_Channel2_IRQHandler(void) {
+//     TIM2 -> SR = 0;
+//     TIM2 -> DIER = TIM_DIER_UIE;
+//     NVIC_EnableIRQ(TIM2_IRQn);
+
+//     NVIC_DisableIRQ(DMA1_Channel2_IRQn);
+
+//     DMA1 -> IFCR = DMA_IFCR_CTCIF2;
+// }
+
+// void TIM2_IRQHandler(void) {
+//     gpio_set(GPIOA, 0);
+//     gpio_setup(GPIOA, 0, GPIO_OUT_OD, GPIO_MODE_OUT_50MHZ);
+//     TIM2 -> CR1 = 0;
+//     TIM2 -> SR = 0;
+// }
 
 int main() {
     RCC -> CR |= RCC_CR_HSEON;
@@ -56,11 +103,13 @@ int main() {
 
     uart1_init();
 
-    delay_ms(3000);
+    RCC -> AHBENR |= RCC_AHBENR_DMA1EN;
+
+    delay_ms(1000);
 
     one_wire_init();
 
-    one_wire_reset();
+    ds_state = DS_NONE;
 
     while (1) {
         gpio_reset(GPIOC, 13);
@@ -68,14 +117,13 @@ int main() {
         gpio_set(GPIOC, 13);
         delay_ms(125);
 
-        one_wire_status_t status = ow_status_get();
-        one_wire_error_t err = ow_error_get();
-
-        uart1_send_str("Status: ");
-        uart1_send_number(status);
-        uart1_send_str(" Error: ");
-        uart1_send_number(err);
-        uart1_send_str("\r\n");
+        if (ds_state == DS_NONE && ow_status_get() == OW_STS_IDLE) {
+            ds_state = DS_RESET;
+            one_wire_reset();
+        } else if (ds_state == DS_RESET && ow_status_get() == OW_STS_RESET_DONE && ow_error_get() == OW_ERR_NONE) {
+            ds_state = DS_SKIP_ROM;
+            ow_tx_byte(0x33);
+        }
     }
 
     return 0;

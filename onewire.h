@@ -1,6 +1,8 @@
 #ifndef ONEWIRE_H
 #define ONEWIRE_H
 
+#include <stdint.h>
+
 typedef enum one_wire_status {
     OW_STS_IDLE, 
 
@@ -30,7 +32,7 @@ void one_wire_init();
 
 void one_wire_reset();
 
-// void one_wire_put_write_data();
+void ow_tx_byte(uint8_t data);
 
 // uint8_t one_wire_get_read_data();
 
