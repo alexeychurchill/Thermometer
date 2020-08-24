@@ -5,6 +5,7 @@
 
 
 #define ONE_WIRE_TIM_PSC            71      // 72
+#define OW_TIM_PSC                  71      // 72
 
 
 #define ONE_WIRE_RST_TIMEOUT        2999    // 3000 us
@@ -44,11 +45,16 @@
 
 #define OW_TX_SLOT_LEN              ((uint16_t) 70)      // 70 us
 #define OW_TX_DUMMY                 ((uint16_t) 0)       // 0 us
-#define OW_TX_LOW_LEN               ((uint16_t) 13)      // 13 us
-#define OW_TX_HIGH_LEN              ((uint16_t) 65)      // 65 us
+#define OW_TX_LOW_LEN               ((uint16_t) 65)      // 65 us
+#define OW_TX_HIGH_LEN              ((uint16_t) 13)      // 13 us
 
 #define OW_TX_DMA_CCR               (DMA_CCR_MINC | \
     DMA_CCR_DIR | \
+    DMA_CCR_PSIZE_0 | \
+    DMA_CCR_MSIZE_0 | \
+    DMA_CCR_TCIE)
+
+#define OW_RX_DMA_CCR               (DMA_CCR_MINC | \
     DMA_CCR_PSIZE_0 | \
     DMA_CCR_MSIZE_0 | \
     DMA_CCR_TCIE)
@@ -76,19 +82,12 @@ void FORCE_INLINE ow_bus_set_active() {
     gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
 }
 
+
+// TODO: Replace with ow_tim_stop
 void FORCE_INLINE ow_bus_disable_tx() {
     NVIC_DisableIRQ(TIM2_IRQn);
     ow_bus_set_idle();
     TIM2 -> CR1 = 0;
-}
-
-static FORCE_INLINE uint32_t ow_bus_rst_prsc_len_ok(uint32_t start, uint32_t stop) {
-    uint32_t len = stop - start; 
-    if (len >= OW_RST_TOTAL_PRSC_MIN && len <= OW_RST_TOTAL_PRSC_MAX) {
-        return 1; 
-    }
-
-    return 0;
 }
 
 static FORCE_INLINE void ow_bus_rst_handle_state() {
@@ -118,10 +117,10 @@ static FORCE_INLINE void ow_bus_rst_handle_state() {
 
 static FORCE_INLINE void ow_put_to_tx_buf(uint8_t byte) {
     for (uint32_t i = 0; i < 8; i++) {
-        uint8_t bit_mask = 0x1 << i;
+        uint8_t bit_mask = 0x1 << (7 - i);
         uint8_t bit_value = byte & bit_mask;
         uint16_t duration = bit_value ? OW_TX_HIGH_LEN : OW_TX_LOW_LEN;
-        ow_buffer_tx[i] = duration;
+        ow_buffer_tx[7 - i] = duration;
     }
     ow_buffer_tx[OW_BUFFER_TX_LEN_BITS - 1] = OW_TX_DUMMY; 
 }
@@ -135,6 +134,7 @@ void TIM2_IRQHandler(void) {
         }
 
         if (TIM2 -> SR & TIM_SR_UIF) {
+            TIM2 -> CR1 = 0;
             ow_rst_presence_timeout = 1;
             TIM2 -> SR = 0;
         }
@@ -181,63 +181,118 @@ void one_wire_init() {
     ow_bus_set_idle();
 }
 
+#define TIM_ARR_PRELOAD             (TIM_CR1_ARPE)
+#define TIM_CH1_PRELOAD             (TIM_CCMR1_OC1PE)
+
+#define TIM_CH1_OUT_PWM1            (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1)
+#define TIM_CH2_IN_TI1              (TIM_CCMR1_CC2S_1)
+#define TIM_CH1_EN_INV              (TIM_CCER_CC1E | TIM_CCER_CC1P)
+#define TIM_CH2_EN                  (TIM_CCER_CC2E)
+
+#define TIM_START(tim)              (tim -> CR1 |= TIM_CR1_CEN)
+#define TIM_START_ONCE(tim)         (tim -> CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM))
+
+
+#define OW_TIM_CH_RESET_CONFIG      (TIM_CH1_OUT_PWM1 | TIM_CH2_IN_TI1)
+#define OW_TIM_CH_RESET_EN          (TIM_CH1_EN_INV | TIM_CH2_EN)
+
+
+
+void ow_tim_stop(TIM_TypeDef *tim);
+
+
 void one_wire_reset() {
     ow_rst_presence_timeout = 0;
     ow_rst_presence_start = 0;
     ow_rst_presence_stop = 0;
 
-    TIM2 -> CR1 = 0;
+    ow_tim_stop(TIM2);
 
-    TIM2 -> DIER = 0;
-    TIM2 -> CNT = 0x0;
     TIM2 -> PSC = ONE_WIRE_TIM_PSC;
     TIM2 -> ARR = ONE_WIRE_RST_TIMEOUT;
     TIM2 -> EGR |= TIM_EGR_UG; 
 
     TIM2 -> CCR1 = ONE_WIRE_RST_PULSE;
-    TIM2 -> CCMR1 |= TIM_CCMR1_OW_OUT_CONFIG;
-    TIM2 -> CCER |= TIM_CCER_OW_OUT_ENABLE;
 
-    TIM2 -> CCMR1 |= TIM_CCMR1_OW_IN_CONFIG;
-    TIM2 -> CCER |= TIM_CCER_OW_IN_ENABLE;
+    TIM2 -> CCMR1 |= OW_TIM_CH_RESET_CONFIG;
+    TIM2 -> CCER |= OW_TIM_CH_RESET_EN;
 
-    ow_bus_set_active();
     bus_error = OW_ERR_NONE;
     bus_status = OW_STS_RESET_IN_PROGRESS;
-    TIM2 -> CR1 = (TIM_CR1_CEN | TIM_CR1_OPM);
-    TIM2 -> SR = 0;
+
+    ow_bus_set_active();
+    TIM_START_ONCE(TIM2);
+    TIM2 -> SR = 0x0;
     TIM2 -> DIER = TIM_DIER_OW_IN_ISR;
 
     NVIC_EnableIRQ(TIM2_IRQn);
 }
 
+void ow_tim_init_dma(TIM_TypeDef *tim) {
+    tim -> CR1 = TIM_CR1_ARPE;
+    tim -> DIER = (TIM_DIER_UDE | TIM_DIER_CC2DE);
+    tim -> CCMR1 = (TIM_CH1_OUT_PWM1 | TIM_CH2_IN_TI1 | TIM_CCMR1_OC1PE);
+    tim -> CCER = (TIM_CH1_EN_INV | TIM_CH2_EN);
+}
+
+void ow_tim_init_timing(TIM_TypeDef *tim, uint16_t slot_len, uint16_t init_pulse_len) {
+    tim -> PSC = OW_TIM_PSC;
+    tim -> ARR = slot_len;
+    tim -> ARR = slot_len;
+    tim -> CCR1 = init_pulse_len;
+}
+
+void ow_dma_init_tx(DMA_Channel_TypeDef *dma, TIM_TypeDef *tim, uint16_t *buf, uint16_t len) {
+    dma -> CCR = OW_TX_DMA_CCR;
+    dma -> CPAR = (uint32_t)(&(tim -> CCR1));
+    dma -> CMAR = (uint32_t)(buf);
+    dma -> CNDTR = len;
+}
+
+void ow_dma_init_rx(DMA_Channel_TypeDef *dma, TIM_TypeDef *tim, uint16_t *buf, uint16_t len) {
+    dma -> CCR = OW_RX_DMA_CCR;
+    dma -> CPAR = (uint32_t)(&(tim -> CCR2));
+    dma -> CMAR = (uint32_t)(buf);
+    dma -> CNDTR = len;
+}
+
+#define OW_DMA_STOP(dma_n, channel_n) {\
+        NVIC_DisableIRQ(DMA## dma_n## _Channel## channel_n## _IRQn);\
+        DMA## dma_n## _Channel## channel_n -> CCR &= (~DMA_CCR_EN);\
+    }
+
+#define OW_DMA_START(dma_n, channel_n) {\
+        NVIC_EnableIRQ(DMA## dma_n## _Channel## channel_n## _IRQn);\
+        DMA## dma_n## _Channel## channel_n -> CCR |= DMA_CCR_EN;\
+    }
+
+void ow_tim_stop(TIM_TypeDef *tim) {
+    ow_bus_set_idle();
+    NVIC_DisableIRQ(TIM2_IRQn);
+    tim -> CR1 = 0x0; 
+    tim -> CNT = 0x0;
+    tim -> SR = 0x0;
+}
+
+void ow_tim_start(TIM_TypeDef *tim) {
+    ow_bus_set_active();
+    tim -> CR1 |= TIM_CR1_CEN;
+}
+
 void ow_tx_byte(uint8_t data) {
-    TIM2 -> CR1 = 0;
-    DMA1_Channel2 -> CCR &= (~DMA_CCR_EN);
+    ow_tim_stop(TIM2);
+    OW_DMA_STOP(1, 2);
 
     ow_put_to_tx_buf(data);
 
-    TIM2 -> CR1 = OW_TX_TIM_CR1;
-    TIM2 -> CR2 = OW_TX_TIM_CR2;
-    TIM2 -> DIER = OW_TX_TIM_DIER;
-    TIM2 -> CCMR1 = OW_TX_TIM_CCMR1;
-    TIM2 -> CCER = OW_TX_TIM_CCER;
-    TIM2 -> CCR1 = ow_buffer_tx[0];
-    TIM2 -> PSC = ONE_WIRE_TIM_PSC;
-    TIM2 -> CNT = 0x0;
-    TIM2 -> ARR = OW_TX_SLOT_LEN;
+    ow_tim_init_dma(TIM2);
+    ow_tim_init_timing(TIM2, OW_TX_SLOT_LEN, ow_buffer_tx[0]);
 
-    DMA1_Channel2 -> CCR = OW_TX_DMA_CCR;
-    DMA1_Channel2 -> CPAR = (uint32_t)(&(TIM2 -> CCR1));
-    DMA1_Channel2 -> CMAR = (uint32_t)(&ow_buffer_tx[1]);
-    DMA1_Channel2 -> CNDTR = (OW_BUFFER_TX_LEN_BITS - 1);
-
-    NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+    ow_dma_init_tx(DMA1_Channel2, TIM2, (&ow_buffer_tx[1]), OW_BUFFER_TX_LEN_BITS - 1);
 
     bus_error = OW_ERR_NONE;
     bus_status = OW_STS_SEND_IN_PROGRESS;
 
-    DMA1_Channel2 -> CCR |= DMA_CCR_EN;
-    ow_bus_set_active();
-    TIM2 -> CR1 |= TIM_CR1_CEN;
+    OW_DMA_START(1, 2);
+    ow_tim_start(TIM2);
 }
