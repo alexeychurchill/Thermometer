@@ -82,13 +82,13 @@ int main() {
             ds_state = DS_RESET;
             one_wire_reset();
         } else if (ds_state == DS_RESET && ow_status_get() == OW_STS_RESET_DONE && ow_error_get() == OW_ERR_NONE) {
-            ds_state = DS_SKIP_ROM;
-            ow_tx_byte(0xCC);
+            // ds_state = DS_SKIP_ROM;
+            // ow_tx_byte(0xCC);
         } else if (ds_state == DS_SKIP_ROM && ow_status_get() == OW_STS_SEND_DONE && ow_error_get() == OW_ERR_NONE) {
             ds_state = DS_CONVERT_T; 
-            ow_tx_byte(0x44);
+            // ow_tx_byte(0x44);
         } else if (ds_state == DS_CONVERT_T && ow_status_get() == OW_STS_SEND_DONE && ow_error_get() == OW_ERR_NONE) {
-            ow_tx_byte(0xFF);
+            // ow_tx_byte(0xFF);
         }
         
     }
