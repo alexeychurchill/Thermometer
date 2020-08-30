@@ -27,7 +27,7 @@
 #define OW_TX_HIGH_LEN              ((uint16_t) 13)      // 13 us
 
 #define OW_RX_SLOT_LEN              ((uint16_t) 13)      // 13 us
-#define OW_RX_LOW_THRESHOLD         ((uint16_t) 17)      // 17 us
+#define OW_RX_LOW_THRESHOLD         ((uint16_t) 15)      // 15 us
 
 #define TIM_CH1_OUT_PWM1            (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1)
 #define TIM_CH2_IN_TI1              (TIM_CCMR1_CC2S_1)
@@ -43,7 +43,7 @@
 #define OW_TIM_EVENTS_RXTX          (TIM_DIER_UDE | TIM_DIER_CC2DE)
 
 #define OW_BUF_DUMMY_INDEX(bytes_n) (bytes_n * UINT8_BIT_COUNT)
-#define OW_BUF_PULSE_TO_BIT(p_len)  ((p_len) > (OW_RX_LOW_THRESHOLD) ? (uint8_t)0x1 : (uint8_t)0x0)
+#define OW_BUF_PULSE_TO_BIT(p_len)  ((p_len) <= (OW_RX_LOW_THRESHOLD) ? (uint8_t)0x1 : (uint8_t)0x0)
 
 #define OW_OP_GUARD()               { if (ow_op_running || ow_op_done) { return; }; ow_op_running = 1; }
 #define OW_OP_GUARD_SOFT()          if (ow_op_running || ow_op_done) { return; }
@@ -109,7 +109,7 @@ static uint8_t FORCE_INLINE ow_rxbuf_get_byte__(uint32_t bit_offset) {
 
     for (uint32_t bit_n = 0; bit_n < UINT8_BIT_COUNT; ++bit_n) {
         uint8_t bit_value = OW_BUF_PULSE_TO_BIT(ow_buffer_rx[bit_offset + bit_n]);
-        byte &= (bit_value << bit_n);
+        byte |= (bit_value << bit_n);
     }
 
     return byte;
