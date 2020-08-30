@@ -4,6 +4,13 @@
 #include "gpio.h"
 
 
+/**
+ * TODO: Move all HW-specific things to the structures (such as pointers to DMA channels structs)
+ * TODO: Call all ISRs from outside:
+ * ISRs should just call 1-Wire module procedures passing aforementioned 1-Wire structures
+ */
+
+
 #define OW_TIM_PSC                  71      // 72
 
 #define OW_RESET_SLOT_LEN           2999    // 3000 us
@@ -11,272 +18,250 @@
 #define OW_RESET_ACK_LEN_MIN        74      // 75 us
 #define OW_RESET_ACK_LEN_MAX        299     // 300 us
 
-#define OW_BUFFER_TX_LEN_BITS       89      // 11 bytes: 11 * 8 bit data + 1 dummy bit
-#define OW_BUFFER_RX_LEN_BITS       88      // 11 bytes: 11 * 8 bit data
-
-#define TIM_CCMR1_OW_OUT_CONFIG     (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1)
-#define TIM_CCER_OW_OUT_ENABLE      (TIM_CCER_CC1E | TIM_CCER_CC1P)
-
-#define TIM_CCMR1_OW_IN_CONFIG      (TIM_CCMR1_CC2S_1)
-#define TIM_CCER_OW_IN_ENABLE       (TIM_CCER_CC2E)
-#define TIM_DIER_OW_IN_ISR          (TIM_DIER_CC2IE | TIM_DIER_UIE)
-
-#define TIM_DIER_OW_RST_RESET_TX    (TIM_DIER_CC1IE)
-#define TIM_DIER_OW_RST_PRESENCE_RX (TIM_DIER_CC2IE | TIM_DIER_UIE)
+#define OW_BUFFER_TX_LEN            129      // 11 bytes: 11 * 8 bit data + 1 dummy bit
+#define OW_BUFFER_RX_LEN            128      // 11 bytes: 11 * 8 bit data
 
 #define OW_SLOT_LEN                 ((uint16_t) 70)      // 70 us
 #define OW_TX_DUMMY                 ((uint16_t) 0)       // 0 us
 #define OW_TX_LOW_LEN               ((uint16_t) 65)      // 65 us
 #define OW_TX_HIGH_LEN              ((uint16_t) 13)      // 13 us
-#define OW_RX_MARKER_LEN            ((uint16_t) 13)      // 13 us
 
-
-
-
+#define OW_RX_SLOT_LEN              ((uint16_t) 13)      // 13 us
+#define OW_RX_LOW_THRESHOLD         ((uint16_t) 17)      // 17 us
 
 #define TIM_CH1_OUT_PWM1            (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1)
 #define TIM_CH2_IN_TI1              (TIM_CCMR1_CC2S_1)
 #define TIM_CH1_EN_INV              (TIM_CCER_CC1E | TIM_CCER_CC1P)
 #define TIM_CH2_EN                  (TIM_CCER_CC2E)
 
-#define TIM_START(tim)              (tim -> CR1 |= TIM_CR1_CEN)
-#define TIM_START_ONCE(tim)         (tim -> CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM))
-
-
-#define OW_TIM_CH_RESET_CONFIG      (TIM_CH1_OUT_PWM1 | TIM_CH2_IN_TI1)
-#define OW_TIM_CH_RESET_EN          (TIM_CH1_EN_INV | TIM_CH2_EN)
-
-
-
-
-
 #define OW_DMA_CCR_BASE             (DMA_CCR_MINC | DMA_CCR_PSIZE_0 | DMA_CCR_MSIZE_0)
-#define OW_DMA_CCR_TX               (OW_DMA_CCR_BASE | DMA_CCR_DIR | DMA_CCR_TCIE)
-#define OW_DMA_CCR_RX               (OW_DMA_CCR_BASE)
+#define OW_DMA_CCR_TX               (OW_DMA_CCR_BASE | DMA_CCR_DIR)
+#define OW_DMA_CCR_RX               (OW_DMA_CCR_BASE | DMA_CCR_TCIE)
+
+#define OW_TIM_EVENTS_DISABLE       (0x0)
+#define OW_TIM_EVENTS_RESET         (TIM_DIER_UIE | TIM_DIER_CC2DE)
+#define OW_TIM_EVENTS_RXTX          (TIM_DIER_UDE | TIM_DIER_CC2DE)
+
+#define OW_BUF_DUMMY_INDEX(bytes_n) (bytes_n * UINT8_BIT_COUNT)
+#define OW_BUF_PULSE_TO_BIT(p_len)  ((p_len) > (OW_RX_LOW_THRESHOLD) ? (uint8_t)0x1 : (uint8_t)0x0)
+
+#define OW_OP_GUARD()               { if (ow_op_running || ow_op_done) { return; }; ow_op_running = 1; }
+#define OW_OP_GUARD_SOFT()          if (ow_op_running || ow_op_done) { return; }
+#define OW_OP_DONE()                { ow_op_running = 0; ow_op_done = 1; }
 
 
+// Internal flag to indicate running operation, reserved for the future applications
+static volatile uint32_t ow_op_running;
+static volatile uint32_t ow_op_done;
+static uint32_t ow_no_devices;
 
-static one_wire_status_t bus_status = OW_STS_IDLE;
-
-static one_wire_error_t bus_error = OW_ERR_NONE;
-
-static volatile uint32_t ow_rst_presence_timeout = 0;
-static volatile uint32_t ow_rst_presence_start = 0;
-static volatile uint32_t ow_rst_presence_stop = 0;
-
-static volatile uint16_t ow_buffer_tx[OW_BUFFER_TX_LEN_BITS];
-static volatile uint16_t ow_buffer_rx[OW_BUFFER_RX_LEN_BITS];
+static uint16_t ow_buffer_tx[OW_BUFFER_TX_LEN];
+static uint16_t ow_buffer_rx[OW_BUFFER_RX_LEN];
 
 
+// Timer Configuration procedures
 
-void FORCE_INLINE ow_bus_set_idle() {
-    // gpio_set(GPIOA, 0);
-    // gpio_setup(GPIOA, 0, GPIO_OUT_OD, GPIO_MODE_OUT_50MHZ);
-}
-
-void FORCE_INLINE ow_bus_set_active() {
-    // gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
-}
-
-typedef struct OwBusState {
-    OW_BS_IDLE, 
-    OW_BS_RESET_PULSE_TX, 
-    OW_BS_RESET_PRESENCE_RX, 
-    OW_BS_DATA_TX, 
-    OW_BS_DATA_RX
-} OwBusState_t;
-
-typedef struct OwBusEvent {
-    OW_BE_START, 
-    OW_BE_IN_RISE, 
-    OW_BE_TIM_UPD, 
-    OW_BE_TX_DONE, 
-    OW_BE_RX_DONE
-} OwBusEvent_t;
-
-typedef struct OwBusResult { 
-    OW_BR_NONE, 
-    OW_BR_RESET_OK,
-    OW_BR_TX_OK, 
-    OW_BR_RX_OK
-} OwBusResult_t;
-
-
-void ow_tim_free_bus(TIM_TypeDef *tim) {
-    tim -> ARR = 0x0;
-    tim -> CCR1 = 0x0;
-    tim -> CNT = 0x0;
-}
-
-void ow_tim_force_update(TIM_TypeDef *tim) {
-    tim -> EGR |= TIM_EGR_UG;
-}
-
-static FORCE_INLINE void ow_put_to_tx_buf(uint8_t byte) {
-    for (uint32_t i = 0; i < 8; i++) {
-        uint8_t bit_mask = 0x1 << (7 - i);
-        uint8_t bit_value = byte & bit_mask;
-        uint16_t duration = bit_value ? OW_TX_HIGH_LEN : OW_TX_LOW_LEN;
-        ow_buffer_tx[i] = duration;
-    }
-    ow_buffer_tx[8] = OW_TX_DUMMY; 
-}
-
-void TIM2_IRQHandler(void) {
-    if (TIM2 -> SR & TIM_SR_CC2IF) {
-        ow_rst_presence_start = ow_rst_presence_stop;
-        ow_rst_presence_stop = TIM2 -> CCR2;
-        TIM2 -> SR = 0x0;
-
-        // TODO: Chech actual lenght!
-        if (ow_rst_presence_start != 0 && ow_rst_presence_stop != 0 && ow_rst_presence_stop > ow_rst_presence_start) {
-            NVIC_DisableIRQ(TIM2_IRQn);
-            TIM2 -> DIER = 0x0;
-            TIM2 -> EGR = TIM_EGR_UG;
-            TIM2 -> SR = 0x0;
-        }
-    }
-
-    if (TIM2 -> SR & TIM_SR_UIF) {
-        NVIC_DisableIRQ(TIM2_IRQn);
-        TIM2 -> DIER = 0x0;
-        TIM2 -> SR = 0x0;
-    }
-}
-
-void DMA1_Channel2_IRQHandler(void) {
-    TIM2 -> SR = 0;
-    TIM2 -> DIER = TIM_DIER_UIE;
-    NVIC_EnableIRQ(TIM2_IRQn);
-
-    NVIC_DisableIRQ(DMA1_Channel2_IRQn);
-
-    DMA1 -> IFCR = DMA_IFCR_CTCIF2;
-}
-
-one_wire_status_t ow_status_get() {
-    return bus_status;
-}
-
-one_wire_error_t ow_error_get() {
-    return bus_error;
-}
-
-void ow_error_reset() {
-    bus_error = OW_ERR_NONE;
-}
-
-void ow_tim_init(TIM_TypeDef *tim) {
+void ow_tim_init__(TIM_TypeDef *tim) {
     tim -> CR1 = TIM_CR1_ARPE;
+    tim -> DIER = 0x0;
     tim -> CCMR1 = (TIM_CH1_OUT_PWM1 | TIM_CH2_IN_TI1 | TIM_CCMR1_OC1PE);
     tim -> CCER = (TIM_CH1_EN_INV | TIM_CH2_EN);
     tim -> PSC = OW_TIM_PSC;
     tim -> ARR = OW_SLOT_LEN;
-    tim -> CCR1 = 0x0;
+    tim -> CCR1 = OW_TX_DUMMY;
     tim -> SR = 0x0;
 }
 
-void one_wire_init() {
-    bus_status = OW_STS_IDLE;
-    RCC -> APB2ENR |= RCC_APB2ENR_IOPAEN;
-    RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
-    ow_bus_set_idle();
+// DMA Configuration procedures
 
-    ow_tim_init(TIM2);
-    TIM2 -> CR1 |= TIM_CR1_CEN;
-
-    gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
-}
-
-void ow_tim_stop(TIM_TypeDef *tim);
-
-
-void one_wire_reset() {
-    ow_rst_presence_timeout = 0;
-    ow_rst_presence_start = 0;
-    ow_rst_presence_stop = 0;
-
-    TIM2 -> ARR = OW_RESET_SLOT_LEN;
-    TIM2 -> CCR1 = OW_RESET_PULSE_LEN;
-    TIM2 -> EGR = TIM_EGR_UG;
-    TIM2 -> SR = 0x0;
-    TIM2 -> ARR = OW_SLOT_LEN; 
-    TIM2 -> CCR1 = OW_TX_DUMMY;
-    TIM2 -> DIER = TIM_DIER_UIE | TIM_DIER_CC2IE;
-    NVIC_EnableIRQ(TIM2_IRQn);
-}
-
-void ow_tim_init_dma(TIM_TypeDef *tim) {
-    tim -> CR1 = TIM_CR1_ARPE;
-    tim -> DIER = (TIM_DIER_UDE | TIM_DIER_CC2DE);
-    tim -> CCMR1 = (TIM_CH1_OUT_PWM1 | TIM_CH2_IN_TI1 | TIM_CCMR1_OC1PE);
-    tim -> CCER = (TIM_CH1_EN_INV | TIM_CH2_EN);
-}
-
-void ow_tim_init_timing(TIM_TypeDef *tim, uint16_t slot_len, uint16_t init_pulse_len) {
-    tim -> PSC = OW_TIM_PSC;
-    tim -> ARR = slot_len;
-    tim -> ARR = slot_len;
-    tim -> CCR1 = init_pulse_len;
-}
-
-void ow_dma_init_tx(DMA_Channel_TypeDef *dma, TIM_TypeDef *tim, uint16_t *buf, uint16_t len) {
+static FORCE_INLINE void ow_dma_init_tx__(DMA_Channel_TypeDef *dma, TIM_TypeDef *tim, uint16_t *buf, uint16_t bit_len) {
     dma -> CCR = OW_DMA_CCR_TX;
     dma -> CPAR = (uint32_t)(&(tim -> CCR1));
     dma -> CMAR = (uint32_t)(buf);
-    dma -> CNDTR = len;
+    dma -> CNDTR = bit_len;
 }
 
-void ow_dma_init_rx(DMA_Channel_TypeDef *dma, TIM_TypeDef *tim, uint16_t *buf, uint16_t len) {
+static FORCE_INLINE void ow_dma_init_rx__(DMA_Channel_TypeDef *dma, TIM_TypeDef *tim, uint16_t *buf, uint16_t bit_len) {
     dma -> CCR = OW_DMA_CCR_RX;
     dma -> CPAR = (uint32_t)(&(tim -> CCR2));
     dma -> CMAR = (uint32_t)(buf);
-    dma -> CNDTR = len;
+    dma -> CNDTR = bit_len;
 }
 
-#define OW_DMA_STOP(dma_n, channel_n) {\
-        NVIC_DisableIRQ(DMA## dma_n## _Channel## channel_n## _IRQn);\
-        DMA## dma_n## _Channel## channel_n -> CCR &= (~DMA_CCR_EN);\
+// TX Buffer common procedures
+
+static FORCE_INLINE void ow_txbuf_put_byte__(uint8_t byte, uint32_t buffer_offset) {
+    for (uint32_t bit_n = 0; bit_n < UINT8_BIT_COUNT; ++bit_n) {
+        ow_buffer_tx[buffer_offset + bit_n] = (UINT8_BIT_VALUE(byte, bit_n)) ? OW_TX_HIGH_LEN : OW_TX_LOW_LEN;
+    }
+}
+
+static FORCE_INLINE void ow_txbuf_put_rx_slots__(uint32_t bit_count, uint8_t buffer_offset) {
+    for (uint32_t bit_n = 0; bit_n < bit_count; ++bit_n) {
+        ow_buffer_tx[buffer_offset + bit_n] = OW_RX_SLOT_LEN;
+    }
+}
+
+// RX Buffer common procedures
+
+static uint8_t FORCE_INLINE ow_rxbuf_get_byte__(uint32_t bit_offset) {
+    uint8_t byte = 0x0;
+
+    for (uint32_t bit_n = 0; bit_n < UINT8_BIT_COUNT; ++bit_n) {
+        uint8_t bit_value = OW_BUF_PULSE_TO_BIT(ow_buffer_rx[bit_offset + bit_n]);
+        byte &= (bit_value << bit_n);
     }
 
-#define OW_DMA_START(dma_n, channel_n) {\
-        NVIC_EnableIRQ(DMA## dma_n## _Channel## channel_n## _IRQn);\
-        DMA## dma_n## _Channel## channel_n -> CCR |= DMA_CCR_EN;\
+    return byte;
+}
+
+// ISRs
+
+void TIM2_IRQHandler(void) {
+    if (TIM2 -> SR & TIM_SR_UIF) {
+        TIM2 -> DIER = OW_TIM_EVENTS_DISABLE;
+        ow_no_devices = 1;
+        OW_OP_DONE();
     }
 
-void ow_tim_stop(TIM_TypeDef *tim) {
-    ow_bus_set_idle();
+    TIM2 -> SR = 0x0;
+}
+
+void DMA1_Channel7_IRQHandler(void) {
     NVIC_DisableIRQ(TIM2_IRQn);
-    tim -> CR1 = 0x0; 
-    tim -> CNT = 0x0;
-    tim -> SR = 0x0;
+
+    TIM2 -> DIER = OW_TIM_EVENTS_DISABLE;
+
+    TIM2 -> ARR = OW_SLOT_LEN;
+    TIM2 -> CCR1 = OW_TX_DUMMY;
+
+    TIM2 -> EGR = TIM_EGR_UG;
+    TIM2 -> SR = 0x0;
+
+    OW_OP_DONE();
+
+    DMA1 -> IFCR = DMA_IFCR_CTCIF7;
 }
 
-void ow_tim_start(TIM_TypeDef *tim) {
-    ow_bus_set_active();
-    tim -> CR1 |= TIM_CR1_CEN;
+// 1-Wire procedures
+
+uint32_t ow_get_op_done() {
+    return ow_op_done;
 }
 
-// void ow_setup_transceiver(uint16_t *tx_buffer, uint16_t *rx_buffer, uint16_t len) {
-//     ow_tim_init_dma(TIM2);
-//     ow_tim_init_timing(TIM2, OW_SLOT_LEN, tx_buffer[0]);
-//     ow_dma_init_tx(DMA1_Channel2, TIM2, (&tx_buffer[1]), len - 1);
-//     ow_dma_init_rx(DMA1_Channel7, TIM2, (&rx_buffer[0]), len);
-// }
+uint32_t ow_get_no_devices() {
+    return ow_no_devices;
+}
 
-void ow_tx_byte(uint8_t data) {
-    ow_tim_stop(TIM2);
-    OW_DMA_STOP(1, 2);
+void ow_reset_op_done() {
+    ow_op_done = 0;
+}
 
-    ow_put_to_tx_buf(data);
+void ow_init() {
+    ow_op_done = 0;
+    ow_no_devices = 0;
+    ow_op_running = 1;
 
-    ow_tim_init_dma(TIM2);
-    ow_tim_init_timing(TIM2, OW_SLOT_LEN, ow_buffer_tx[0]);
-    ow_dma_init_tx(DMA1_Channel2, TIM2, (&ow_buffer_tx[1]), 7);
+    RCC -> APB2ENR |= RCC_APB2ENR_IOPAEN;
+    RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
 
-    bus_error = OW_ERR_NONE;
-    bus_status = OW_STS_SEND_IN_PROGRESS;
+    ow_tim_init__(TIM2);
+    TIM2 -> CR1 |= TIM_CR1_CEN;
 
-    OW_DMA_START(1, 2);
-    ow_tim_start(TIM2);
+    gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
+
+    NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+    NVIC_EnableIRQ(TIM2_IRQn);
+
+    ow_op_running = 0;
+}
+
+void ow_reset() {
+    OW_OP_GUARD();
+
+    ow_no_devices = 0;
+
+    ow_dma_init_rx__(DMA1_Channel7, TIM2, (&ow_buffer_rx[0]), 2);
+
+    TIM2 -> ARR = OW_RESET_SLOT_LEN;
+    TIM2 -> CCR1 = OW_RESET_PULSE_LEN;
+
+    TIM2 -> EGR = TIM_EGR_UG;
+    TIM2 -> SR = 0x0;
+
+    TIM2 -> ARR = OW_SLOT_LEN;
+    TIM2 -> CCR1 = OW_TX_DUMMY;
+
+    TIM2 -> DIER = OW_TIM_EVENTS_RESET;
+
+    DMA1_Channel7 -> CCR |= DMA_CCR_EN;
+}
+
+void ow_start_transceiver(uint16_t byte_len) {
+    OW_OP_GUARD();
+
+    uint32_t bit_len = byte_len * UINT8_BIT_COUNT;
+    ow_dma_init_tx__(DMA1_Channel2, TIM2, (&ow_buffer_tx[0]), bit_len + 1); // +1 DUMMY bit
+    ow_dma_init_rx__(DMA1_Channel7, TIM2, (&ow_buffer_rx[0]), bit_len);
+
+    DMA1_Channel2 -> CCR |= DMA_CCR_EN;
+    DMA1_Channel7 -> CCR |= DMA_CCR_EN;
+
+    TIM2 -> DIER = OW_TIM_EVENTS_RXTX;
+}
+
+void ow_txbuf_put_byte(uint8_t data) {
+    OW_OP_GUARD_SOFT();
+
+    uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(1);
+    if (dummy_bit_index >= OW_BUFFER_TX_LEN) {
+        return;
+    }
+
+    ow_txbuf_put_byte__(data, 0);
+
+    ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
+}
+
+void ow_txbuf_put_bytes(uint8_t *data, uint32_t byte_len) {
+    OW_OP_GUARD_SOFT();
+
+    uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(byte_len);
+    if (dummy_bit_index >= OW_BUFFER_TX_LEN) {
+        return;
+    }
+
+    for (int byte_n = 0; byte_n < byte_len; ++byte_n) {
+        ow_txbuf_put_byte__(data[byte_n], byte_n * UINT8_BIT_COUNT);
+    }
+
+    ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
+}
+
+void ow_txbuf_put_rx_slots(uint32_t byte_len) {
+    OW_OP_GUARD_SOFT();
+
+    uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(byte_len);
+    if (dummy_bit_index >= OW_BUFFER_TX_LEN) {
+        return;
+    }
+
+    ow_txbuf_put_rx_slots__(byte_len * UINT8_BIT_COUNT, 0);
+
+    ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
+}
+
+uint32_t ow_rxbuf_is_presence_ok() {
+    uint16_t presence_length = ow_buffer_rx[1] - ow_buffer_tx[0];
+    return (presence_length >= OW_RESET_ACK_LEN_MIN) && (presence_length <= OW_RESET_ACK_LEN_MAX);
+}
+
+uint8_t ow_rxbuf_get_byte() {
+    return ow_rxbuf_get_byte__(0);
+}
+
+void ow_rxbuf_get_bytes(uint8_t *data, uint32_t byte_len) {
+    for (uint32_t byte_n = 0; byte_n < byte_len; ++byte_n) {
+        data[byte_n] = ow_rxbuf_get_byte__(byte_n * UINT8_BIT_COUNT);
+    }
 }

@@ -3,41 +3,28 @@
 
 #include <stdint.h>
 
-typedef enum one_wire_status {
-    OW_STS_IDLE, 
+void ow_init();
 
-    OW_STS_RESET_IN_PROGRESS, 
-    OW_STS_RESET_DONE, 
+void ow_reset();
 
-    OW_STS_SEND_IN_PROGRESS,
-    OW_STS_SEND_DONE, 
+uint32_t ow_get_op_done();
 
-    OW_STS_READ_IN_PROGRESS,  
-    OW_STS_READ_DONE
-} one_wire_status_t;
+uint32_t ow_get_no_devices();
 
-typedef enum one_wire_error {
-    OW_ERR_NONE = 0, 
-    OW_ERR_PRESENCE_TIMEOUT = 100, 
-    OW_ERR_PRESENCE_WRONG_TIMING = 200
-} one_wire_error_t;
+void ow_reset_op_done();
 
-one_wire_status_t ow_status_get();
+void ow_start_transceiver(uint16_t byte_len);
 
-one_wire_error_t ow_error_get();
+void ow_txbuf_put_byte(uint8_t data);
 
-void ow_error_reset();
+void ow_txbuf_put_bytes(uint8_t *data, uint32_t byte_len);
 
-void one_wire_init();
+void ow_txbuf_put_rx_slots(uint32_t byte_len);
 
-void one_wire_reset();
+uint32_t ow_rxbuf_is_presence_ok();
 
-void ow_tx_byte(uint8_t data);
+uint8_t ow_rxbuf_get_byte();
 
-// uint8_t one_wire_get_read_data();
-
-// void one_wire_proceed_read(); 
-
-// void one_wire_proceed_write();
+void ow_rxbuf_get_bytes(uint8_t *data, uint32_t byte_len);
 
 #endif

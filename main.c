@@ -38,6 +38,8 @@ void SysTick_Handler(void) {
     sys_ticks++;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
 int main() {
     RCC -> CR |= RCC_CR_HSEON;
     while (!(RCC -> CR & RCC_CR_HSERDY)) ;
@@ -68,33 +70,73 @@ int main() {
 
     RCC -> AHBENR |= RCC_AHBENR_DMA1EN;
 
-    one_wire_init();
+    ow_init();
 
     ds_state = DS_NONE;
 
-    while (1) {
-        // gpio_reset(GPIOC, 13);
-        // delay_ms(125);
-        // gpio_set(GPIOC, 13);
-        // delay_ms(125);
+    ow_reset();
 
-        if (ds_state == DS_NONE && ow_status_get() == OW_STS_IDLE) {
-            ds_state = DS_RESET;
-            one_wire_reset();
-        } else if (ds_state == DS_RESET && ow_status_get() == OW_STS_RESET_DONE && ow_error_get() == OW_ERR_NONE) {
-            // ds_state = DS_SKIP_ROM;
-            // ow_tx_byte(0xCC);
-        } else if (ds_state == DS_SKIP_ROM && ow_status_get() == OW_STS_SEND_DONE && ow_error_get() == OW_ERR_NONE) {
-            ds_state = DS_CONVERT_T; 
-            // ow_tx_byte(0x44);
-        } else if (ds_state == DS_CONVERT_T && ow_status_get() == OW_STS_SEND_DONE && ow_error_get() == OW_ERR_NONE) {
-            // ow_tx_byte(0xFF);
-        }
-        
+    while (!ow_get_op_done()) ;
+    ow_reset_op_done();
+
+    ow_txbuf_put_byte(0xCC);
+    ow_start_transceiver(1);
+
+    while (!ow_get_op_done()) ;
+    ow_reset_op_done();
+
+//    ow_txbuf_put_byte(0x44);
+//    ow_start_transceiver(1);
+//
+//    while (!ow_get_op_done()) ;
+//    ow_reset_op_done();
+
+    ow_txbuf_put_byte(0xBE);
+    ow_start_transceiver(1);
+
+    while (!ow_get_op_done()) ;
+    ow_reset_op_done();
+
+    ow_txbuf_put_rx_slots(9);
+    ow_start_transceiver(9);
+
+    while (!ow_get_op_done());
+    ow_reset_op_done();
+
+//    uint32_t init_a = 1;
+
+    while (1) {
+         gpio_reset(GPIOC, 13);
+         delay_ms(125);
+         gpio_set(GPIOC, 13);
+         delay_ms(125);
+
+       /* if (ow_is_operation_done() || init_a) {
+            ow_reset_op_done();
+            init_a = 0;
+            uart1_send_strn("STATE");
+            if (ds_state == DS_NONE) {
+                ds_state = DS_RESET;
+                uart1_send_strn("init");
+                one_wire_reset();
+            } else if (ds_state == DS_RESET) {
+                ds_state = DS_SKIP_ROM;
+                uart1_send_strn("skiprom");
+                ow_tx_byte(0xCC);
+            } else if (ds_state == DS_SKIP_ROM) {
+                ds_state = DS_CONVERT_T;
+                uart1_send_strn("convertt");
+                ow_tx_byte(0x44);
+            } *//*else if (ds_state == DS_CONVERT_T) {
+                ow_tx_byte(0xFF);
+            }*//*
+
+        }*/
     }
 
     return 0;
 }
+#pragma clang diagnostic pop
 
 
 void delay_ms(const uint32_t ms) {
