@@ -7,11 +7,9 @@ void ow_init();
 
 void ow_reset();
 
-uint32_t ow_get_op_done();
+uint32_t ow_is_running();
 
 uint32_t ow_get_no_devices();
-
-void ow_reset_op_done();
 
 void ow_start_transceiver(uint16_t byte_len);
 

@@ -45,14 +45,13 @@
 #define OW_BUF_DUMMY_INDEX(bytes_n) (bytes_n * UINT8_BIT_COUNT)
 #define OW_BUF_PULSE_TO_BIT(p_len)  ((p_len) <= (OW_RX_LOW_THRESHOLD) ? (uint8_t)0x1 : (uint8_t)0x0)
 
-#define OW_OP_GUARD()               { if (ow_op_running || ow_op_done) { return; }; ow_op_running = 1; }
-#define OW_OP_GUARD_SOFT()          if (ow_op_running || ow_op_done) { return; }
-#define OW_OP_DONE()                { ow_op_running = 0; ow_op_done = 1; }
+#define OW_OP_GUARD()               { if (ow_op_running) { return; }; ow_op_running = 1; }
+#define OW_OP_GUARD_SOFT()          if (ow_op_running) { return; }
+#define OW_OP_DONE()                ow_op_running = 0;
 
 
 // Internal flag to indicate running operation, reserved for the future applications
 static volatile uint32_t ow_op_running;
-static volatile uint32_t ow_op_done;
 static uint32_t ow_no_devices;
 
 static uint16_t ow_buffer_tx[OW_BUFFER_TX_LEN];
@@ -128,8 +127,6 @@ void TIM2_IRQHandler(void) {
 }
 
 void DMA1_Channel7_IRQHandler(void) {
-    NVIC_DisableIRQ(TIM2_IRQn);
-
     TIM2 -> DIER = OW_TIM_EVENTS_DISABLE;
 
     TIM2 -> ARR = OW_SLOT_LEN;
@@ -145,20 +142,15 @@ void DMA1_Channel7_IRQHandler(void) {
 
 // 1-Wire procedures
 
-uint32_t ow_get_op_done() {
-    return ow_op_done;
+uint32_t ow_is_running() {
+    return ow_op_running ? 1 : 0;
 }
 
 uint32_t ow_get_no_devices() {
     return ow_no_devices;
 }
 
-void ow_reset_op_done() {
-    ow_op_done = 0;
-}
-
 void ow_init() {
-    ow_op_done = 0;
     ow_no_devices = 0;
     ow_op_running = 1;
 

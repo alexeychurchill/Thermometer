@@ -74,64 +74,58 @@ int main() {
 
     ds_state = DS_NONE;
 
+    // Convert T
+
     ow_reset();
 
-    while (!ow_get_op_done()) ;
-    ow_reset_op_done();
+    while (ow_is_running()) ;
 
     ow_txbuf_put_byte(0xCC);
     ow_start_transceiver(1);
 
-    while (!ow_get_op_done()) ;
-    ow_reset_op_done();
+    while (ow_is_running()) ;
 
-//    ow_txbuf_put_byte(0x44);
-//    ow_start_transceiver(1);
-//
-//    while (!ow_get_op_done()) ;
-//    ow_reset_op_done();
+    ow_txbuf_put_byte(0x44);
+    ow_start_transceiver(1);
+
+    while (ow_is_running()) ;
+
+    uint8_t done = 0x00;
+
+    while (done <= 0x00) {
+        ow_txbuf_put_rx_slots(1);
+        ow_start_transceiver(1);
+
+        while (ow_is_running()) ;
+
+        done = ow_rxbuf_get_byte();
+    }
+
+    // Read Scratchpad
+    ow_reset();
+
+    while (ow_is_running()) ;
+
+    ow_txbuf_put_byte(0xCC);
+    ow_start_transceiver(1);
+
+    while (ow_is_running()) ;
 
     ow_txbuf_put_byte(0xBE);
     ow_start_transceiver(1);
 
-    while (!ow_get_op_done()) ;
-    ow_reset_op_done();
+    while (ow_is_running()) ;
 
     ow_txbuf_put_rx_slots(9);
     ow_start_transceiver(9);
 
-    while (!ow_get_op_done());
-    ow_reset_op_done();
-
-//    uint32_t init_a = 1;
+    while (ow_is_running()) ;
 
     while (1) {
          gpio_reset(GPIOC, 13);
          delay_ms(125);
          gpio_set(GPIOC, 13);
          delay_ms(125);
-
-       /* if (ow_is_operation_done() || init_a) {
-            ow_reset_op_done();
-            init_a = 0;
-            uart1_send_strn("STATE");
-            if (ds_state == DS_NONE) {
-                ds_state = DS_RESET;
-                uart1_send_strn("init");
-                one_wire_reset();
-            } else if (ds_state == DS_RESET) {
-                ds_state = DS_SKIP_ROM;
-                uart1_send_strn("skiprom");
-                ow_tx_byte(0xCC);
-            } else if (ds_state == DS_SKIP_ROM) {
-                ds_state = DS_CONVERT_T;
-                uart1_send_strn("convertt");
-                ow_tx_byte(0x44);
-            } *//*else if (ds_state == DS_CONVERT_T) {
-                ow_tx_byte(0xFF);
-            }*//*
-
-        }*/
     }
 
     return 0;
