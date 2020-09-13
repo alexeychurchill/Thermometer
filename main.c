@@ -5,22 +5,6 @@
 #include "gpio.h"
 #include "onewire.h"
 
-#define GPIO_IN_MODE_FLOATING 0b01
-#define GPIO_OUT_MODE_OD 0b01 // Open Drain
-
-#define LED_PIN_RESET (~(GPIO_CRH_MODE13 | GPIO_CRH_CNF13))
-#define LED_PIN_CONFIG (GPIO_CRH_MODE13_1 | GPIO_CRH_MODE13_0)
-
-typedef enum DS18B20_State {
-    DS_NONE = 0,
-    DS_RESET, 
-    DS_SKIP_ROM, 
-    DS_CONVERT_T, 
-    DS_CONVERT_T_READ_STATUS
-} DS18B20_State_t;
-
-static volatile DS18B20_State_t ds_state = DS_NONE; 
-
 
 volatile uint64_t sys_ticks = 0UL;
 
@@ -72,33 +56,31 @@ int main() {
 
     ow_init();
 
-    ds_state = DS_NONE;
-
     // Convert T
 
     ow_reset();
 
     while (ow_is_running()) ;
 
-    ow_txbuf_put_byte(0xCC);
+    ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xCC));
     ow_start_transceiver(1);
 
     while (ow_is_running()) ;
 
-    ow_txbuf_put_byte(0x44);
+    ow_txbuf_put_bytes(OW_SINGLE_BYTE(0x44));
     ow_start_transceiver(1);
 
     while (ow_is_running()) ;
 
-    uint8_t done = 0x00;
+    uint8_t done[] = { 0x00 };
 
-    while (done <= 0x00) {
+    while (done[0] <= 0x00) {
         ow_txbuf_put_rx_slots(1);
         ow_start_transceiver(1);
 
         while (ow_is_running()) ;
 
-        done = ow_rxbuf_get_byte();
+        ow_rxbuf_get_bytes(done, 1);
     }
 
     // Read Scratchpad
@@ -106,12 +88,12 @@ int main() {
 
     while (ow_is_running()) ;
 
-    ow_txbuf_put_byte(0xCC);
+    ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xCC));
     ow_start_transceiver(1);
 
     while (ow_is_running()) ;
 
-    ow_txbuf_put_byte(0xBE);
+    ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xBE));
     ow_start_transceiver(1);
 
     while (ow_is_running()) ;

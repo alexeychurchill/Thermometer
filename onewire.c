@@ -202,20 +202,7 @@ void ow_start_transceiver(uint16_t byte_len) {
     TIM2 -> DIER = OW_TIM_EVENTS_RXTX;
 }
 
-void ow_txbuf_put_byte(uint8_t data) {
-    OW_OP_GUARD_SOFT();
-
-    uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(1);
-    if (dummy_bit_index >= OW_BUFFER_TX_LEN) {
-        return;
-    }
-
-    ow_txbuf_put_byte__(data, 0);
-
-    ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
-}
-
-void ow_txbuf_put_bytes(uint8_t *data, uint32_t byte_len) {
+void ow_txbuf_put_bytes(const uint8_t *data, uint32_t byte_len) {
     OW_OP_GUARD_SOFT();
 
     uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(byte_len);
@@ -246,10 +233,6 @@ void ow_txbuf_put_rx_slots(uint32_t byte_len) {
 uint32_t ow_rxbuf_is_presence_ok() {
     uint16_t presence_length = ow_buffer_rx[1] - ow_buffer_tx[0];
     return (presence_length >= OW_RESET_ACK_LEN_MIN) && (presence_length <= OW_RESET_ACK_LEN_MAX);
-}
-
-uint8_t ow_rxbuf_get_byte() {
-    return ow_rxbuf_get_byte__(0);
 }
 
 void ow_rxbuf_get_bytes(uint8_t *data, uint32_t byte_len) {
