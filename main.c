@@ -53,6 +53,9 @@ int main() {
     uart1_init();
 
     RCC -> AHBENR |= RCC_AHBENR_DMA1EN;
+    RCC -> APB2ENR |= RCC_APB2ENR_IOPAEN;
+    RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
+    gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
 
     ow_init();
 

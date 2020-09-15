@@ -18,6 +18,7 @@
 #define OW_RESET_ACK_LEN_MIN        74      // 75 us
 #define OW_RESET_ACK_LEN_MAX        299     // 300 us
 
+#define OW_BUFFER_RESET_LEN         2        // 4 bytes: RESET end time and PRESENCE end time
 #define OW_BUFFER_TX_LEN            129      // 11 bytes: 11 * 8 bit data + 1 dummy bit
 #define OW_BUFFER_RX_LEN            128      // 11 bytes: 11 * 8 bit data
 
@@ -50,9 +51,10 @@
 #define OW_OP_DONE()                ow_op_running = 0;
 
 
-// Internal flag to indicate running operation, reserved for the future applications
+// Flag which indicates running operation
 static volatile uint32_t ow_op_running;
-static uint32_t ow_no_devices;
+
+static OwError_t ow_error;
 
 static uint16_t ow_buffer_tx[OW_BUFFER_TX_LEN];
 static uint16_t ow_buffer_rx[OW_BUFFER_RX_LEN];
@@ -60,7 +62,7 @@ static uint16_t ow_buffer_rx[OW_BUFFER_RX_LEN];
 
 // Timer Configuration procedures
 
-void ow_tim_init__(TIM_TypeDef *tim) {
+void ow_tim_start__(TIM_TypeDef *tim) {
     tim -> CR1 = TIM_CR1_ARPE;
     tim -> DIER = 0x0;
     tim -> CCMR1 = (TIM_CH1_OUT_PWM1 | TIM_CH2_IN_TI1 | TIM_CCMR1_OC1PE);
@@ -69,6 +71,7 @@ void ow_tim_init__(TIM_TypeDef *tim) {
     tim -> ARR = OW_SLOT_LEN;
     tim -> CCR1 = OW_TX_DUMMY;
     tim -> SR = 0x0;
+    tim -> CR1 |= TIM_CR1_CEN;
 }
 
 // DMA Configuration procedures
@@ -103,7 +106,7 @@ static FORCE_INLINE void ow_txbuf_put_rx_slots__(uint32_t bit_count, uint8_t buf
 
 // RX Buffer common procedures
 
-static uint8_t FORCE_INLINE ow_rxbuf_get_byte__(uint32_t bit_offset) {
+static FORCE_INLINE uint8_t ow_rxbuf_get_byte__(uint32_t bit_offset) {
     uint8_t byte = 0x0;
 
     for (uint32_t bit_n = 0; bit_n < UINT8_BIT_COUNT; ++bit_n) {
@@ -114,12 +117,38 @@ static uint8_t FORCE_INLINE ow_rxbuf_get_byte__(uint32_t bit_offset) {
     return byte;
 }
 
+// Presence length check
+
+static void FORCE_INLINE ow_check_presence_length__() {
+    uint16_t presence_len = ow_buffer_rx[1] - ow_buffer_tx[0];
+    bool presence_too_short = presence_len < OW_RESET_ACK_LEN_MIN;
+    bool presence_too_long = presence_len > OW_RESET_ACK_LEN_MAX;
+    if (presence_too_short || presence_too_long) {
+        ow_error = OW_ERROR_PRESENCE_WRONG_LENGTH;
+    }
+}
+
+// Timer TX pulse management
+
+static FORCE_INLINE void ow_tim_set_pulse_force__(TIM_TypeDef *tim, uint32_t pulse_len, uint32_t low_len) {
+    tim -> ARR = pulse_len;
+    tim -> CCR1 = low_len;
+
+    tim -> EGR = TIM_EGR_UG;
+    tim -> SR = 0x0;
+}
+
+static FORCE_INLINE void ow_tim_set_pulse__(TIM_TypeDef *tim, uint32_t pulse_len, uint32_t low_len) {
+    tim -> ARR = pulse_len;
+    tim -> CCR1 = low_len;
+}
+
 // ISRs
 
 void TIM2_IRQHandler(void) {
     if (TIM2 -> SR & TIM_SR_UIF) {
         TIM2 -> DIER = OW_TIM_EVENTS_DISABLE;
-        ow_no_devices = 1;
+        ow_error = OW_ERROR_NO_DEVICES;
         OW_OP_DONE();
     }
 
@@ -129,11 +158,9 @@ void TIM2_IRQHandler(void) {
 void DMA1_Channel7_IRQHandler(void) {
     TIM2 -> DIER = OW_TIM_EVENTS_DISABLE;
 
-    TIM2 -> ARR = OW_SLOT_LEN;
-    TIM2 -> CCR1 = OW_TX_DUMMY;
+    ow_tim_set_pulse_force__(TIM2, OW_SLOT_LEN, OW_TX_DUMMY);
 
-    TIM2 -> EGR = TIM_EGR_UG;
-    TIM2 -> SR = 0x0;
+    ow_check_presence_length__();
 
     OW_OP_DONE();
 
@@ -146,21 +173,15 @@ uint32_t ow_is_running() {
     return ow_op_running ? 1 : 0;
 }
 
-uint32_t ow_get_no_devices() {
-    return ow_no_devices;
+OwError_t ow_get_error() {
+    return ow_error;
 }
 
 void ow_init() {
-    ow_no_devices = 0;
+    ow_error = OW_ERROR_NONE;
     ow_op_running = 1;
 
-    RCC -> APB2ENR |= RCC_APB2ENR_IOPAEN;
-    RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
-
-    ow_tim_init__(TIM2);
-    TIM2 -> CR1 |= TIM_CR1_CEN;
-
-    gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
+    ow_tim_start__(TIM2);
 
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
     NVIC_EnableIRQ(TIM2_IRQn);
@@ -171,18 +192,11 @@ void ow_init() {
 void ow_reset() {
     OW_OP_GUARD();
 
-    ow_no_devices = 0;
-
     ow_dma_init_rx__(DMA1_Channel7, TIM2, (&ow_buffer_rx[0]), 2);
 
-    TIM2 -> ARR = OW_RESET_SLOT_LEN;
-    TIM2 -> CCR1 = OW_RESET_PULSE_LEN;
+    ow_tim_set_pulse_force__(TIM2, OW_RESET_SLOT_LEN, OW_RESET_PULSE_LEN);
 
-    TIM2 -> EGR = TIM_EGR_UG;
-    TIM2 -> SR = 0x0;
-
-    TIM2 -> ARR = OW_SLOT_LEN;
-    TIM2 -> CCR1 = OW_TX_DUMMY;
+    ow_tim_set_pulse__(TIM2, OW_SLOT_LEN, OW_TX_DUMMY);
 
     TIM2 -> DIER = OW_TIM_EVENTS_RESET;
 
@@ -228,11 +242,6 @@ void ow_txbuf_put_rx_slots(uint32_t byte_len) {
     ow_txbuf_put_rx_slots__(byte_len * UINT8_BIT_COUNT, 0);
 
     ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
-}
-
-uint32_t ow_rxbuf_is_presence_ok() {
-    uint16_t presence_length = ow_buffer_rx[1] - ow_buffer_tx[0];
-    return (presence_length >= OW_RESET_ACK_LEN_MIN) && (presence_length <= OW_RESET_ACK_LEN_MAX);
 }
 
 void ow_rxbuf_get_bytes(uint8_t *data, uint32_t byte_len) {
