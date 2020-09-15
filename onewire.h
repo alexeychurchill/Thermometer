@@ -12,11 +12,11 @@ typedef enum OwError {
     OW_ERROR_PRESENCE_WRONG_LENGTH
 } OwError_t;
 
-void ow_init();
+void ow_start();
 
 void ow_reset();
 
-uint32_t ow_is_running();
+uint32_t ow_is_busy();
 
 OwError_t ow_get_error();
 

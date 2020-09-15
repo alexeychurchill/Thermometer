@@ -30,7 +30,7 @@
 #define OW_RX_SLOT_LEN              ((uint16_t) 13)      // 13 us
 #define OW_RX_LOW_THRESHOLD         ((uint16_t) 15)      // 15 us
 
-#define TIM_CH1_OUT_PWM1            (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1)
+#define TIM_CH1_OUT_PWM1            (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1PE)
 #define TIM_CH2_IN_TI1              (TIM_CCMR1_CC2S_1)
 #define TIM_CH1_EN_INV              (TIM_CCER_CC1E | TIM_CCER_CC1P)
 #define TIM_CH2_EN                  (TIM_CCER_CC2E)
@@ -46,13 +46,14 @@
 #define OW_BUF_DUMMY_INDEX(bytes_n) (bytes_n * UINT8_BIT_COUNT)
 #define OW_BUF_PULSE_TO_BIT(p_len)  ((p_len) <= (OW_RX_LOW_THRESHOLD) ? (uint8_t)0x1 : (uint8_t)0x0)
 
-#define OW_OP_GUARD()               { if (ow_op_running) { return; }; ow_op_running = 1; }
-#define OW_OP_GUARD_SOFT()          if (ow_op_running) { return; }
-#define OW_OP_DONE()                ow_op_running = 0;
+#define OW_OP_GUARD()               { if (ow_busy) { return; }; ow_busy = 1; }
+#define OW_OP_GUARD_SOFT()          if (ow_busy) { return; }
+#define OW_OP_DONE()                ow_busy = 0;
 
 
 // Flag which indicates running operation
-static volatile uint32_t ow_op_running;
+static volatile uint32_t ow_busy;
+static bool ow_is_reseting;
 
 static OwError_t ow_error;
 
@@ -65,7 +66,7 @@ static uint16_t ow_buffer_rx[OW_BUFFER_RX_LEN];
 void ow_tim_start__(TIM_TypeDef *tim) {
     tim -> CR1 = TIM_CR1_ARPE;
     tim -> DIER = 0x0;
-    tim -> CCMR1 = (TIM_CH1_OUT_PWM1 | TIM_CH2_IN_TI1 | TIM_CCMR1_OC1PE);
+    tim -> CCMR1 = (TIM_CH1_OUT_PWM1 | TIM_CH2_IN_TI1);
     tim -> CCER = (TIM_CH1_EN_INV | TIM_CH2_EN);
     tim -> PSC = OW_TIM_PSC;
     tim -> ARR = OW_SLOT_LEN;
@@ -160,7 +161,10 @@ void DMA1_Channel7_IRQHandler(void) {
 
     ow_tim_set_pulse_force__(TIM2, OW_SLOT_LEN, OW_TX_DUMMY);
 
-    ow_check_presence_length__();
+    if (ow_is_reseting) {
+        ow_check_presence_length__();
+        ow_is_reseting = false;
+    }
 
     OW_OP_DONE();
 
@@ -169,28 +173,32 @@ void DMA1_Channel7_IRQHandler(void) {
 
 // 1-Wire procedures
 
-uint32_t ow_is_running() {
-    return ow_op_running ? 1 : 0;
+uint32_t ow_is_busy() {
+    return ow_busy ? 1 : 0;
 }
 
 OwError_t ow_get_error() {
     return ow_error;
 }
 
-void ow_init() {
+void ow_start() {
     ow_error = OW_ERROR_NONE;
-    ow_op_running = 1;
+    ow_busy = 1;
+
+    ow_is_reseting = false;
 
     ow_tim_start__(TIM2);
 
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
     NVIC_EnableIRQ(TIM2_IRQn);
 
-    ow_op_running = 0;
+    ow_busy = 0;
 }
 
 void ow_reset() {
     OW_OP_GUARD();
+
+    ow_is_reseting = true;
 
     ow_dma_init_rx__(DMA1_Channel7, TIM2, (&ow_buffer_rx[0]), 2);
 

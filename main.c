@@ -57,23 +57,23 @@ int main() {
     RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
     gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
 
-    ow_init();
+    ow_start();
 
     // Convert T
 
     ow_reset();
 
-    while (ow_is_running()) ;
+    while (ow_is_busy()) ;
 
     ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xCC));
     ow_start_transceiver(1);
 
-    while (ow_is_running()) ;
+    while (ow_is_busy()) ;
 
     ow_txbuf_put_bytes(OW_SINGLE_BYTE(0x44));
     ow_start_transceiver(1);
 
-    while (ow_is_running()) ;
+    while (ow_is_busy()) ;
 
     uint8_t done[] = { 0x00 };
 
@@ -81,7 +81,7 @@ int main() {
         ow_txbuf_put_rx_slots(1);
         ow_start_transceiver(1);
 
-        while (ow_is_running()) ;
+        while (ow_is_busy()) ;
 
         ow_rxbuf_get_bytes(done, 1);
     }
@@ -89,22 +89,22 @@ int main() {
     // Read Scratchpad
     ow_reset();
 
-    while (ow_is_running()) ;
+    while (ow_is_busy()) ;
 
     ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xCC));
     ow_start_transceiver(1);
 
-    while (ow_is_running()) ;
+    while (ow_is_busy()) ;
 
     ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xBE));
     ow_start_transceiver(1);
 
-    while (ow_is_running()) ;
+    while (ow_is_busy()) ;
 
     ow_txbuf_put_rx_slots(9);
     ow_start_transceiver(9);
 
-    while (ow_is_running()) ;
+    while (ow_is_busy()) ;
 
     while (1) {
          gpio_reset(GPIOC, 13);
