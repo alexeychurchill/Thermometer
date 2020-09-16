@@ -1,7 +1,8 @@
 #include "onewire.h"
 #include <stdint.h>
+#include <stddef.h>
 #include "stm32f1xx.h"
-#include "gpio.h"
+#include "utils.h"
 
 
 /**
@@ -98,12 +99,6 @@ static FORCE_INLINE void ow_dma_init_rx__(DMA_Channel_TypeDef *dma, TIM_TypeDef 
 static FORCE_INLINE void ow_txbuf_put_byte__(uint8_t byte, uint32_t buffer_offset) {
     for (uint32_t bit_n = 0; bit_n < UINT8_BIT_COUNT; ++bit_n) {
         ow_buffer_tx[buffer_offset + bit_n] = (UINT8_BIT_VALUE(byte, bit_n)) ? OW_TX_HIGH_LEN : OW_TX_LOW_LEN;
-    }
-}
-
-static FORCE_INLINE void ow_txbuf_put_rx_slots__(uint32_t bit_count, uint8_t buffer_offset) {
-    for (uint32_t bit_n = 0; bit_n < bit_count; ++bit_n) {
-        ow_buffer_tx[buffer_offset + bit_n] = OW_RX_SLOT_LEN;
     }
 }
 
@@ -245,7 +240,7 @@ void ow_start_transceiver(uint16_t byte_len, bool wait_done) {
     TIM2 -> DIER = OW_TIM_EVENTS_RXTX;
 }
 
-void ow_txbuf_put_bytes(const uint8_t *data, uint32_t byte_len) {
+void ow_txbuf_put(const uint8_t *data, uint32_t byte_len) {
     OW_OP_GUARD_SOFT();
 
     uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(byte_len);
@@ -253,27 +248,22 @@ void ow_txbuf_put_bytes(const uint8_t *data, uint32_t byte_len) {
         return;
     }
 
-    for (int byte_n = 0; byte_n < byte_len; ++byte_n) {
+    if (data == NULL) {
+        for (uint32_t bit_n = 0; bit_n < byte_len * UINT8_BIT_COUNT; bit_n++) {
+            ow_buffer_tx[bit_n] = OW_RX_SLOT_LEN;
+        }
+        ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
+        return;
+    }
+
+    for (uint32_t byte_n = 0; byte_n < byte_len; ++byte_n) {
         ow_txbuf_put_byte__(data[byte_n], byte_n * UINT8_BIT_COUNT);
     }
 
     ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
 }
 
-void ow_txbuf_put_rx_slots(uint32_t byte_len) {
-    OW_OP_GUARD_SOFT();
-
-    uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(byte_len);
-    if (dummy_bit_index >= OW_BUFFER_TX_LEN) {
-        return;
-    }
-
-    ow_txbuf_put_rx_slots__(byte_len * UINT8_BIT_COUNT, 0);
-
-    ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
-}
-
-void ow_rxbuf_get_bytes(uint8_t *data, uint32_t byte_len) {
+void ow_rxbuf_get(uint8_t *data, uint32_t byte_len) {
     for (uint32_t byte_n = 0; byte_n < byte_len; ++byte_n) {
         data[byte_n] = ow_rxbuf_get_byte__(byte_n * UINT8_BIT_COUNT);
     }
