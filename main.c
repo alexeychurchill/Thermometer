@@ -66,25 +66,14 @@ int main() {
     while (ow_is_busy()) ;
 
     ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xCC));
-    ow_start_transceiver(1);
+    ow_start_transceiver(1, false);
 
     while (ow_is_busy()) ;
 
     ow_txbuf_put_bytes(OW_SINGLE_BYTE(0x44));
-    ow_start_transceiver(1);
+    ow_start_transceiver(1, true);
 
     while (ow_is_busy()) ;
-
-    uint8_t done[] = { 0x00 };
-
-    while (done[0] <= 0x00) {
-        ow_txbuf_put_rx_slots(1);
-        ow_start_transceiver(1);
-
-        while (ow_is_busy()) ;
-
-        ow_rxbuf_get_bytes(done, 1);
-    }
 
     // Read Scratchpad
     ow_reset();
@@ -92,17 +81,17 @@ int main() {
     while (ow_is_busy()) ;
 
     ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xCC));
-    ow_start_transceiver(1);
+    ow_start_transceiver(1, false);
 
     while (ow_is_busy()) ;
 
     ow_txbuf_put_bytes(OW_SINGLE_BYTE(0xBE));
-    ow_start_transceiver(1);
+    ow_start_transceiver(1, false);
 
     while (ow_is_busy()) ;
 
     ow_txbuf_put_rx_slots(9);
-    ow_start_transceiver(9);
+    ow_start_transceiver(9, false);
 
     while (ow_is_busy()) ;
 

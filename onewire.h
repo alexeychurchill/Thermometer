@@ -20,7 +20,7 @@ uint32_t ow_is_busy();
 
 OwError_t ow_get_error();
 
-void ow_start_transceiver(uint16_t byte_len);
+void ow_start_transceiver(uint16_t byte_len, bool wait_done);
 
 void ow_txbuf_put_bytes(const uint8_t *data, uint32_t byte_len);
 

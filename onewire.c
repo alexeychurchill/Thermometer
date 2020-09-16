@@ -42,6 +42,7 @@
 #define OW_TIM_EVENTS_DISABLE       (0x0)
 #define OW_TIM_EVENTS_RESET         (TIM_DIER_UIE | TIM_DIER_CC2DE)
 #define OW_TIM_EVENTS_RXTX          (TIM_DIER_UDE | TIM_DIER_CC2DE)
+#define OW_TIM_EVENTS_WAIT_DEV      (TIM_DIER_CC2IE)
 
 #define OW_BUF_DUMMY_INDEX(bytes_n) (bytes_n * UINT8_BIT_COUNT)
 #define OW_BUF_PULSE_TO_BIT(p_len)  ((p_len) <= (OW_RX_LOW_THRESHOLD) ? (uint8_t)0x1 : (uint8_t)0x0)
@@ -54,6 +55,7 @@
 // Flag which indicates running operation
 static volatile uint32_t ow_busy;
 static bool ow_is_reseting;
+static bool ow_wait_done_device;
 
 static OwError_t ow_error;
 
@@ -147,13 +149,23 @@ static FORCE_INLINE void ow_tim_set_pulse__(TIM_TypeDef *tim, uint32_t pulse_len
 // ISRs
 
 void TIM2_IRQHandler(void) {
-    if (TIM2 -> SR & TIM_SR_UIF) {
-        TIM2 -> DIER = OW_TIM_EVENTS_DISABLE;
-        ow_error = OW_ERROR_NO_DEVICES;
-        OW_OP_DONE();
+    if ((TIM2 -> SR & TIM_SR_CC2IF) && ow_wait_done_device) {
+        if (TIM2 -> CCR2 < OW_RX_LOW_THRESHOLD) {
+            TIM2 -> DIER = OW_TIM_EVENTS_DISABLE;
+            ow_wait_done_device = false;
+            OW_OP_DONE();
+        }
+        TIM2 -> SR = 0x0;
+        return;
     }
 
-    TIM2 -> SR = 0x0;
+    if (TIM2 -> SR & TIM_SR_UIF) {
+        TIM2->DIER = OW_TIM_EVENTS_DISABLE;
+        ow_error = OW_ERROR_NO_DEVICES;
+        OW_OP_DONE();
+        TIM2 -> SR = 0x0;
+        return;
+    }
 }
 
 void DMA1_Channel7_IRQHandler(void) {
@@ -166,7 +178,12 @@ void DMA1_Channel7_IRQHandler(void) {
         ow_is_reseting = false;
     }
 
-    OW_OP_DONE();
+    if (ow_wait_done_device) {
+        ow_tim_set_pulse__(TIM2, OW_SLOT_LEN, OW_RX_SLOT_LEN);
+        TIM2 -> DIER = OW_TIM_EVENTS_WAIT_DEV;
+    } else {
+        OW_OP_DONE();
+    }
 
     DMA1 -> IFCR = DMA_IFCR_CTCIF7;
 }
@@ -182,8 +199,9 @@ OwError_t ow_get_error() {
 }
 
 void ow_start() {
-    ow_error = OW_ERROR_NONE;
     ow_busy = 1;
+    ow_error = OW_ERROR_NONE;
+    ow_wait_done_device = false;
 
     ow_is_reseting = false;
 
@@ -199,6 +217,7 @@ void ow_reset() {
     OW_OP_GUARD();
 
     ow_is_reseting = true;
+    ow_wait_done_device = false;
 
     ow_dma_init_rx__(DMA1_Channel7, TIM2, (&ow_buffer_rx[0]), 2);
 
@@ -211,8 +230,10 @@ void ow_reset() {
     DMA1_Channel7 -> CCR |= DMA_CCR_EN;
 }
 
-void ow_start_transceiver(uint16_t byte_len) {
+void ow_start_transceiver(uint16_t byte_len, bool wait_done) {
     OW_OP_GUARD();
+
+    ow_wait_done_device = wait_done;
 
     uint32_t bit_len = byte_len * UINT8_BIT_COUNT;
     ow_dma_init_tx__(DMA1_Channel2, TIM2, (&ow_buffer_tx[0]), bit_len + 1); // +1 DUMMY bit
