@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "stm32f1xx.h"
+
 #define OW_SINGLE_BYTE(value)   (const uint8_t[]) { (value) }, 1
 #define OW_READ_SLOTS(count)    NULL, count
 
@@ -22,7 +24,7 @@ uint32_t ow_is_busy();
 
 OwError_t ow_get_error();
 
-void ow_start_transceiver(uint16_t byte_len, bool wait_done);
+void ow_start_transceiver(bool wait_done);
 
 // Pass [data] as NULL to put RX slots
 void ow_txbuf_put(const uint8_t *data, uint32_t byte_len);
