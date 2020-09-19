@@ -325,7 +325,7 @@ OwError_t ow_get_error() {
 
 // Init
 
-void ow_start() {
+void ow_start_bus() {
     ow_busy = 1;
     ow_error = OW_ERROR_NONE;
     ow_flag_wait_request = false;

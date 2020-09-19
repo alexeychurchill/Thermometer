@@ -57,7 +57,7 @@ int main() {
     RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
     gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
 
-    ow_start();
+    ow_start_bus();
 
     // Convert T
 

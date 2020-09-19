@@ -17,7 +17,7 @@ typedef enum OwError {
     OW_ERROR_ILLEGAL_STATE
 } OwError_t;
 
-void ow_start();
+void ow_start_bus();
 
 uint32_t ow_is_busy();
 
