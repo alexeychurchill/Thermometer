@@ -65,12 +65,8 @@ int main() {
 
     while (ow_is_busy()) ;
 
-    ow_txbuf_put(OW_SINGLE_BYTE(0xCC));
-    ow_start_transceiver(false);
-
-    while (ow_is_busy()) ;
-
-    ow_txbuf_put(OW_SINGLE_BYTE(0x44));
+    ow_txbuf_put(OW_SINGLE_BYTE(0xCC), false);
+    ow_txbuf_put(OW_SINGLE_BYTE(0x44), true);
     ow_start_transceiver(true);
 
     while (ow_is_busy()) ;
@@ -80,17 +76,9 @@ int main() {
 
     while (ow_is_busy()) ;
 
-    ow_txbuf_put(OW_SINGLE_BYTE(0xCC));
-    ow_start_transceiver(false);
-
-    while (ow_is_busy()) ;
-
-    ow_txbuf_put(OW_SINGLE_BYTE(0xBE));
-    ow_start_transceiver(false);
-
-    while (ow_is_busy()) ;
-
-    ow_txbuf_put(OW_READ_SLOTS(9));
+    ow_txbuf_put(OW_SINGLE_BYTE(0xCC), false);
+    ow_txbuf_put(OW_SINGLE_BYTE(0xBE), true);
+    ow_txbuf_put(OW_READ_SLOTS(9), true);
     ow_start_transceiver(false);
 
     while (ow_is_busy()) ;

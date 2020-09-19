@@ -52,7 +52,7 @@
 #define OW_DMA_CH_IN                (DMA1_Channel7)
 #define OW_DMA_CH_IN_IRQ_N          (DMA1_Channel7_IRQn)
 
-#define OW_BUF_DUMMY_INDEX(bytes_n) (bytes_n * UINT8_BIT_COUNT)
+#define OW_BUF_DUMMY_INDEX(bytes_n) ((bytes_n) * UINT8_BIT_COUNT)
 #define OW_BUF_PULSE_TO_BIT(p_len)  ((p_len) <= (OW_RX_LOW_THRESHOLD) ? (uint8_t)0x1 : (uint8_t)0x0)
 
 #define OW_OP_GUARD()               { if (ow_busy) { return; }; ow_busy = 1; }
@@ -67,7 +67,7 @@ static bool ow_wait_done_device;
 
 static OwError_t ow_error;
 
-static uint32_t ow_buffer_current_len;
+static uint32_t ow_tx_buffer_data_size;
 static uint16_t ow_buffer_tx[OW_BUFFER_TX_LEN];
 static uint16_t ow_buffer_rx[OW_BUFFER_RX_LEN];
 
@@ -242,7 +242,7 @@ void ow_start_transceiver(bool wait_done) {
 
     ow_wait_done_device = wait_done;
 
-    uint32_t bit_len = ow_buffer_current_len * UINT8_BIT_COUNT;
+    uint32_t bit_len = ow_tx_buffer_data_size * UINT8_BIT_COUNT;
     ow_dma_init_tx__(OW_DMA_CH_OUT, OW_TIMER, (&ow_buffer_tx[0]), bit_len + 1); // +1 DUMMY bit
     ow_dma_init_rx__(OW_DMA_CH_IN, OW_TIMER, (&ow_buffer_rx[0]), bit_len);
 
@@ -254,26 +254,28 @@ void ow_start_transceiver(bool wait_done) {
 
 // Buffer operations
 
-void ow_txbuf_put(const uint8_t *data, uint32_t byte_len) {
+void ow_txbuf_put(const uint8_t *data, uint32_t byte_len, bool append) {
     OW_OP_GUARD_SOFT();
 
-    uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(byte_len);
+    uint32_t ow_tx_buffer_data_size_new = append ? (ow_tx_buffer_data_size + byte_len) : byte_len;
+    uint32_t dummy_bit_index = OW_BUF_DUMMY_INDEX(ow_tx_buffer_data_size_new);
     if (dummy_bit_index >= OW_BUFFER_TX_LEN) {
         return;
     }
 
-    ow_buffer_current_len = byte_len;
+    uint32_t buffer_bits_offset = (append ? ow_tx_buffer_data_size : 0) * UINT8_BIT_COUNT;
+    ow_tx_buffer_data_size = ow_tx_buffer_data_size_new;
 
     if (data == NULL) {
         for (uint32_t bit_n = 0; bit_n < byte_len * UINT8_BIT_COUNT; bit_n++) {
-            ow_buffer_tx[bit_n] = OW_RX_SLOT_LEN;
+            ow_buffer_tx[bit_n + buffer_bits_offset] = OW_RX_SLOT_LEN;
         }
         ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;
         return;
     }
 
     for (uint32_t byte_n = 0; byte_n < byte_len; ++byte_n) {
-        ow_txbuf_put_byte__(data[byte_n], byte_n * UINT8_BIT_COUNT);
+        ow_txbuf_put_byte__(data[byte_n], byte_n * UINT8_BIT_COUNT + buffer_bits_offset);
     }
 
     ow_buffer_tx[dummy_bit_index] = OW_TX_DUMMY;

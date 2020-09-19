@@ -26,8 +26,15 @@ OwError_t ow_get_error();
 
 void ow_start_transceiver(bool wait_done);
 
-// Pass [data] as NULL to put RX slots
-void ow_txbuf_put(const uint8_t *data, uint32_t byte_len);
+/**
+ * Puts data / read slots to the transmission buffer
+ *
+ * @param data array of data that should be transmitted
+ *        OR NULL to put read slots
+ * @param byte_len length of the data (or, read slots) in bytes
+ * @param append false if buffer should be overwritten
+ */
+void ow_txbuf_put(const uint8_t *data, uint32_t byte_len, bool append);
 
 void ow_rxbuf_get(uint8_t *data, uint32_t byte_len);
 
