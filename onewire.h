@@ -13,18 +13,17 @@
 typedef enum OwError {
     OW_ERROR_NONE,
     OW_ERROR_NO_DEVICES,
-    OW_ERROR_PRESENCE_WRONG_LENGTH
+    OW_ERROR_PRESENCE_WRONG_LENGTH,
+    OW_ERROR_ILLEGAL_STATE
 } OwError_t;
 
 void ow_start();
-
-void ow_reset();
 
 uint32_t ow_is_busy();
 
 OwError_t ow_get_error();
 
-void ow_start_transceiver(bool wait_done);
+void ow_start_rxtx(bool wait_request);
 
 /**
  * Puts data / read slots to the transmission buffer

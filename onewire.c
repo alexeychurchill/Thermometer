@@ -62,8 +62,7 @@
 
 // Flag which indicates running operation
 static volatile uint32_t ow_busy;
-static bool ow_is_reseting;
-static bool ow_wait_done_device;
+static bool ow_flag_wait_request;
 
 static OwError_t ow_error;
 
@@ -71,6 +70,28 @@ static uint32_t ow_tx_buffer_data_size;
 static uint16_t ow_buffer_tx[OW_BUFFER_TX_LEN];
 static uint16_t ow_buffer_rx[OW_BUFFER_RX_LEN];
 
+typedef enum OwStage {
+    OW_STAGE_IDLE,
+    OW_STAGE_RESET,
+    OW_STAGE_RXTX,
+    OW_STAGE_WAITING_DEVICE,
+
+    OW_STAGE_MAX
+} OwStage_t;
+
+typedef enum OwEvt {
+    OW_EVT_NONE,
+
+    OW_EVT_START_RXTX,
+    OW_EVT_TIM_COUNTED,
+    OW_EVT_TIM_PULSE_SAMPLED,
+    OW_EVT_DATA_RECEIVED,
+
+    OW_EVT_MAX
+} OwEvt_t;
+
+static volatile OwStage_t ow_state;
+static volatile OwEvt_t ow_pending_evt;
 
 // Timer Configuration procedures
 
@@ -84,6 +105,21 @@ void ow_tim_start__(TIM_TypeDef *tim) {
     tim -> CCR1 = OW_TX_DUMMY;
     tim -> SR = 0x0;
     tim -> CR1 |= TIM_CR1_CEN;
+}
+
+// Timer TX pulse configuration procedures
+
+static FORCE_INLINE void ow_tim_set_pulse_force__(TIM_TypeDef *tim, uint32_t pulse_len, uint32_t low_len) {
+    tim -> ARR = pulse_len;
+    tim -> CCR1 = low_len;
+
+    tim -> EGR = TIM_EGR_UG;
+    tim -> SR = 0x0;
+}
+
+static FORCE_INLINE void ow_tim_set_pulse__(TIM_TypeDef *tim, uint32_t pulse_len, uint32_t low_len) {
+    tim -> ARR = pulse_len;
+    tim -> CCR1 = low_len;
 }
 
 // DMA Configuration procedures
@@ -100,6 +136,25 @@ static FORCE_INLINE void ow_dma_init_rx__(DMA_Channel_TypeDef *dma, TIM_TypeDef 
     dma -> CPAR = (uint32_t)(&(tim -> CCR2));
     dma -> CMAR = (uint32_t)(buf);
     dma -> CNDTR = bit_len;
+}
+
+// 1-Wire operational procedures
+
+static void ow_send_reset_pulse__() {
+    ow_dma_init_rx__(OW_DMA_CH_IN, OW_TIMER, (&ow_buffer_rx[0]), 2);
+    ow_tim_set_pulse_force__(OW_TIMER, OW_RESET_SLOT_LEN, OW_RESET_PULSE_LEN);
+    ow_tim_set_pulse__(OW_TIMER, OW_SLOT_LEN, OW_TX_DUMMY);
+    OW_TIMER -> DIER = OW_TIM_EVENTS_RESET;
+    OW_DMA_CH_IN -> CCR |= DMA_CCR_EN;
+}
+
+static void ow_start_dma__() {
+    uint32_t bit_len = ow_tx_buffer_data_size * UINT8_BIT_COUNT;
+    ow_dma_init_tx__(OW_DMA_CH_OUT, OW_TIMER, (&ow_buffer_tx[0]), bit_len + 1); // +1 DUMMY bit
+    ow_dma_init_rx__(OW_DMA_CH_IN, OW_TIMER, (&ow_buffer_rx[0]), bit_len);
+    OW_DMA_CH_OUT -> CCR |= DMA_CCR_EN;
+    OW_DMA_CH_IN -> CCR |= DMA_CCR_EN;
+    OW_TIMER -> DIER = OW_TIM_EVENTS_RXTX;
 }
 
 // TX Buffer common procedures
@@ -126,7 +181,7 @@ static FORCE_INLINE uint8_t ow_rxbuf_get_byte__(uint32_t bit_offset) {
 // Presence length check
 
 static void FORCE_INLINE ow_check_presence_length__() {
-    uint16_t presence_len = ow_buffer_rx[1] - ow_buffer_tx[0];
+    uint16_t presence_len = ow_buffer_rx[1] - ow_buffer_rx[0];
     bool presence_too_short = presence_len < OW_RESET_ACK_LEN_MIN;
     bool presence_too_long = presence_len > OW_RESET_ACK_LEN_MAX;
     if (presence_too_short || presence_too_long) {
@@ -134,61 +189,128 @@ static void FORCE_INLINE ow_check_presence_length__() {
     }
 }
 
-// Timer TX pulse management
+// 1-Wire FSM core
 
-static FORCE_INLINE void ow_tim_set_pulse_force__(TIM_TypeDef *tim, uint32_t pulse_len, uint32_t low_len) {
-    tim -> ARR = pulse_len;
-    tim -> CCR1 = low_len;
+static void state_error(OwStage_t);
+static void state_idle_on_start_rxtx(OwStage_t);
+static void state_reset_on_counted(OwStage_t);
+static void state_reset_on_data_received(OwStage_t);
+static void state_rxtx_on_data_received(OwStage_t);
+static void state_waiting_on_pulse_sampled(OwStage_t);
 
-    tim -> EGR = TIM_EGR_UG;
-    tim -> SR = 0x0;
+static void (*const ow_state_transition[OW_STAGE_MAX][OW_EVT_MAX]) (OwStage_t) = {
+        [OW_STAGE_IDLE][OW_EVT_NONE]                            = state_error,
+        [OW_STAGE_IDLE][OW_EVT_START_RXTX]                      = state_idle_on_start_rxtx,
+        [OW_STAGE_IDLE][OW_EVT_TIM_COUNTED]                     = state_error,
+        [OW_STAGE_IDLE][OW_EVT_TIM_PULSE_SAMPLED]               = state_error,
+        [OW_STAGE_IDLE][OW_EVT_DATA_RECEIVED]                   = state_error,
+
+        [OW_STAGE_RESET][OW_EVT_NONE]                           = state_error,
+        [OW_STAGE_RESET][OW_EVT_START_RXTX]                     = state_error,
+        [OW_STAGE_RESET][OW_EVT_TIM_COUNTED]                    = state_reset_on_counted,
+        [OW_STAGE_RESET][OW_EVT_TIM_PULSE_SAMPLED]              = state_error,
+        [OW_STAGE_RESET][OW_EVT_DATA_RECEIVED]                  = state_reset_on_data_received,
+
+        [OW_STAGE_RXTX][OW_EVT_NONE]                            = state_error,
+        [OW_STAGE_RXTX][OW_EVT_START_RXTX]                      = state_error,
+        [OW_STAGE_RXTX][OW_EVT_TIM_COUNTED]                     = state_error,
+        [OW_STAGE_RXTX][OW_EVT_TIM_PULSE_SAMPLED]               = state_error,
+        [OW_STAGE_RXTX][OW_EVT_DATA_RECEIVED]                   = state_rxtx_on_data_received,
+
+        [OW_STAGE_WAITING_DEVICE][OW_EVT_NONE]                  = state_error,
+        [OW_STAGE_WAITING_DEVICE][OW_EVT_START_RXTX]            = state_error,
+        [OW_STAGE_WAITING_DEVICE][OW_EVT_TIM_COUNTED]           = state_error,
+        [OW_STAGE_WAITING_DEVICE][OW_EVT_TIM_PULSE_SAMPLED]     = state_waiting_on_pulse_sampled,
+        [OW_STAGE_WAITING_DEVICE][OW_EVT_DATA_RECEIVED]         = state_error,
+};
+
+static void ow_switch_state() {
+    OwEvt_t event = ow_pending_evt;
+    ow_pending_evt = OW_EVT_NONE;
+    OwStage_t current_state = ow_state;
+    ow_state_transition[current_state][event](current_state);
 }
 
-static FORCE_INLINE void ow_tim_set_pulse__(TIM_TypeDef *tim, uint32_t pulse_len, uint32_t low_len) {
-    tim -> ARR = pulse_len;
-    tim -> CCR1 = low_len;
+// 1-Wire FSM state transitions
+
+static void state_error(OwStage_t current) {
+    ow_error = OW_ERROR_ILLEGAL_STATE;
+    ow_state = OW_STAGE_IDLE;
+    OW_DMA_CH_IN -> CCR &= (~DMA_CCR_EN);
+    OW_DMA_CH_OUT -> CCR &= (~DMA_CCR_EN);
+    ow_tim_set_pulse_force__(OW_TIMER, OW_SLOT_LEN, OW_TX_DUMMY);
+    OW_OP_DONE();
+}
+
+static void state_idle_on_start_rxtx(OwStage_t current) {
+    OW_OP_GUARD();
+    ow_state = OW_STAGE_RESET;
+    ow_send_reset_pulse__();
+}
+
+static void state_reset_on_counted(OwStage_t current) {
+    OW_TIMER -> DIER = OW_TIM_EVENTS_DISABLE;
+    ow_error = OW_ERROR_NO_DEVICES;
+    ow_state = OW_STAGE_IDLE;
+    OW_OP_DONE();
+}
+
+static void state_reset_on_data_received(OwStage_t current) {
+    OW_TIMER -> DIER = OW_TIM_EVENTS_DISABLE;
+    ow_tim_set_pulse_force__(OW_TIMER, OW_SLOT_LEN, OW_TX_DUMMY);
+    ow_check_presence_length__();
+    if (ow_error == OW_ERROR_NONE) {
+        ow_state = OW_STAGE_RXTX;
+        ow_start_dma__();
+    } else {
+        ow_state = OW_STAGE_IDLE;
+        OW_OP_DONE();
+    }
+}
+
+static void state_rxtx_on_data_received(OwStage_t current) {
+    OW_TIMER -> DIER = OW_TIM_EVENTS_DISABLE;
+    ow_tim_set_pulse_force__(OW_TIMER, OW_SLOT_LEN, OW_TX_DUMMY);
+    if (ow_flag_wait_request) {
+        ow_state = OW_STAGE_WAITING_DEVICE;
+        ow_flag_wait_request = false;
+        ow_tim_set_pulse__(OW_TIMER, OW_SLOT_LEN, OW_RX_SLOT_LEN);
+        OW_TIMER -> DIER = OW_TIM_EVENTS_WAIT_DEV;
+    } else {
+        ow_state = OW_STAGE_IDLE;
+        OW_OP_DONE();
+    }
+}
+
+static void state_waiting_on_pulse_sampled(OwStage_t current) {
+    if (OW_TIMER -> CCR2 >= OW_RX_LOW_THRESHOLD) {
+        return;
+    }
+
+    OW_TIMER -> DIER = OW_TIM_EVENTS_DISABLE;
+    ow_state = OW_STAGE_IDLE;
+    OW_OP_DONE();
 }
 
 // ISRs
 
 void TIM2_IRQHandler(void) {
-    if ((OW_TIMER -> SR & TIM_SR_CC2IF) && ow_wait_done_device) {
-        if (OW_TIMER -> CCR2 < OW_RX_LOW_THRESHOLD) {
-            OW_TIMER -> DIER = OW_TIM_EVENTS_DISABLE;
-            ow_wait_done_device = false;
-            OW_OP_DONE();
-        }
-        OW_TIMER -> SR = 0x0;
-        return;
+    if ((OW_TIMER -> SR & TIM_SR_CC2IF) && (OW_TIMER -> DIER & TIM_DIER_CC2IE)) {
+        ow_pending_evt = OW_EVT_TIM_PULSE_SAMPLED;
     }
 
-    if (OW_TIMER -> SR & TIM_SR_UIF) {
-        OW_TIMER -> DIER = OW_TIM_EVENTS_DISABLE;
-        ow_error = OW_ERROR_NO_DEVICES;
-        OW_OP_DONE();
-        OW_TIMER -> SR = 0x0;
-        return;
+    if ((OW_TIMER -> SR & TIM_SR_UIF) && (OW_TIMER -> DIER & TIM_DIER_UIE)) {
+        ow_pending_evt = OW_EVT_TIM_COUNTED;
     }
+
+    OW_TIMER -> SR = 0x0;
+    ow_switch_state();
 }
 
 void DMA1_Channel7_IRQHandler(void) {
-    OW_TIMER -> DIER = OW_TIM_EVENTS_DISABLE;
-
-    ow_tim_set_pulse_force__(OW_TIMER, OW_SLOT_LEN, OW_TX_DUMMY);
-
-    if (ow_is_reseting) {
-        ow_check_presence_length__();
-        ow_is_reseting = false;
-    }
-
-    if (ow_wait_done_device) {
-        ow_tim_set_pulse__(OW_TIMER, OW_SLOT_LEN, OW_RX_SLOT_LEN);
-        OW_TIMER -> DIER = OW_TIM_EVENTS_WAIT_DEV;
-    } else {
-        OW_OP_DONE();
-    }
-
+    ow_pending_evt = OW_EVT_DATA_RECEIVED;
     OW_DMA_IN -> IFCR = DMA_IFCR_CTCIF7;
+    ow_switch_state();
 }
 
 // 1-Wire procedures
@@ -206,9 +328,9 @@ OwError_t ow_get_error() {
 void ow_start() {
     ow_busy = 1;
     ow_error = OW_ERROR_NONE;
-    ow_wait_done_device = false;
-
-    ow_is_reseting = false;
+    ow_flag_wait_request = false;
+    ow_state = OW_STAGE_IDLE;
+    ow_pending_evt = OW_EVT_NONE;
 
     ow_tim_start__(OW_TIMER);
 
@@ -220,36 +342,12 @@ void ow_start() {
 
 // Transaction steps
 
-void ow_reset() {
-    OW_OP_GUARD();
+void ow_start_rxtx(bool wait_request) {
+    OW_OP_GUARD_SOFT();
 
-    ow_is_reseting = true;
-    ow_wait_done_device = false;
-
-    ow_dma_init_rx__(OW_DMA_CH_IN, OW_TIMER, (&ow_buffer_rx[0]), 2);
-
-    ow_tim_set_pulse_force__(OW_TIMER, OW_RESET_SLOT_LEN, OW_RESET_PULSE_LEN);
-
-    ow_tim_set_pulse__(OW_TIMER, OW_SLOT_LEN, OW_TX_DUMMY);
-
-    OW_TIMER -> DIER = OW_TIM_EVENTS_RESET;
-
-    OW_DMA_CH_IN -> CCR |= DMA_CCR_EN;
-}
-
-void ow_start_transceiver(bool wait_done) {
-    OW_OP_GUARD();
-
-    ow_wait_done_device = wait_done;
-
-    uint32_t bit_len = ow_tx_buffer_data_size * UINT8_BIT_COUNT;
-    ow_dma_init_tx__(OW_DMA_CH_OUT, OW_TIMER, (&ow_buffer_tx[0]), bit_len + 1); // +1 DUMMY bit
-    ow_dma_init_rx__(OW_DMA_CH_IN, OW_TIMER, (&ow_buffer_rx[0]), bit_len);
-
-    OW_DMA_CH_OUT -> CCR |= DMA_CCR_EN;
-    OW_DMA_CH_IN -> CCR |= DMA_CCR_EN;
-
-    OW_TIMER -> DIER = OW_TIM_EVENTS_RXTX;
+    ow_flag_wait_request = wait_request;
+    ow_pending_evt = OW_EVT_START_RXTX;
+    ow_switch_state();
 }
 
 // Buffer operations
