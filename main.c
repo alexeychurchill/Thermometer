@@ -57,29 +57,22 @@ int main() {
     RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
     gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
 
-    ow_start();
+    ow_start_bus();
 
     // Convert T
 
-    ow_reset();
-
-    while (ow_is_busy()) ;
-
     ow_txbuf_put(OW_SINGLE_BYTE(0xCC), false);
     ow_txbuf_put(OW_SINGLE_BYTE(0x44), true);
-    ow_start_transceiver(true);
+    ow_start_rxtx(true);
 
     while (ow_is_busy()) ;
 
     // Read Scratchpad
-    ow_reset();
-
-    while (ow_is_busy()) ;
 
     ow_txbuf_put(OW_SINGLE_BYTE(0xCC), false);
     ow_txbuf_put(OW_SINGLE_BYTE(0xBE), true);
     ow_txbuf_put(OW_READ_SLOTS(9), true);
-    ow_start_transceiver(false);
+    ow_start_rxtx(false);
 
     while (ow_is_busy()) ;
 
