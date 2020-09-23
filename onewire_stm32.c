@@ -1,4 +1,4 @@
-#include "onewire.h"
+#include "onewire_stm32.h"
 #include <stdint.h>
 #include <stddef.h>
 #include "stm32f1xx.h"
@@ -315,8 +315,8 @@ void DMA1_Channel7_IRQHandler(void) {
 
 // 1-Wire procedures
 
-uint32_t ow_is_busy() {
-    return ow_busy ? 1 : 0;
+bool ow_is_busy() {
+    return ow_busy ? true : false;
 }
 
 OwError_t ow_get_error() {

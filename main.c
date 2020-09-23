@@ -4,6 +4,8 @@
 #include "uart.h"
 #include "gpio.h"
 #include "onewire.h"
+#include "onewire_stm32.h"
+#include "ds18b20.h"
 
 
 volatile uint64_t sys_ticks = 0UL;
@@ -21,6 +23,14 @@ uint32_t stopwatch_time();
 void SysTick_Handler(void) {
     sys_ticks++;
 }
+
+static const OwBusLine_t ow_line = {
+        .is_busy = ow_is_busy,
+        .get_error = ow_get_error,
+        .put_tx_buffer = ow_txbuf_put,
+        .get_rx_buffer = ow_rxbuf_get,
+        .start_rxtx = ow_start_rxtx,
+};
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
@@ -59,28 +69,21 @@ int main() {
 
     ow_start_bus();
 
-    // Convert T
-
-    ow_txbuf_put(OW_SINGLE_BYTE(0xCC), false);
-    ow_txbuf_put(OW_SINGLE_BYTE(0x44), true);
-    ow_start_rxtx(true);
-
-    while (ow_is_busy()) ;
-
-    // Read Scratchpad
-
-    ow_txbuf_put(OW_SINGLE_BYTE(0xCC), false);
-    ow_txbuf_put(OW_SINGLE_BYTE(0xBE), true);
-    ow_txbuf_put(OW_READ_SLOTS(9), true);
-    ow_start_rxtx(false);
-
-    while (ow_is_busy()) ;
+    DS18B20Sensor_t temp_sensor;
 
     while (1) {
          gpio_reset(GPIOC, 13);
          delay_ms(125);
          gpio_set(GPIOC, 13);
          delay_ms(125);
+
+         ds18b20_convert_t_send(&ow_line);
+         while (ow_line.is_busy()) ;
+
+         ds18b20_send_read_scratchpad(&ow_line, &temp_sensor);
+         while (ow_line.is_busy()) ;
+
+         // TODO: Send temp to the UART
     }
 
     return 0;
