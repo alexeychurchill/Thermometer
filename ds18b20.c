@@ -14,26 +14,26 @@
 
 
 bool ds18b20_convert_t_send(const OwBusLine_t *line) {
-    if (line -> is_busy()) {
-        return false;
-    }
-
-    uint8_t tx_buf[] = { OW_SKIP_ROM, DS18B20_CONVERT_T };
-    line -> put_tx_buffer(tx_buf, 2, false);
-    line -> start_rxtx(true);
+//    if (line -> is_busy()) {
+//        return false;
+//    }
+//
+//    uint8_t tx_buf[] = { OW_SKIP_ROM, DS18B20_CONVERT_T };
+//    line -> put_tx_buffer(tx_buf, 2, false);
+//    line -> start_rxtx(true);
     return true;
 }
 
 bool ds18b20_send_read_scratchpad(const OwBusLine_t *line, DS18B20Sensor_t *sensor) {
     // TODO: Implement ROM handling
-    if (line -> is_busy()) {
-        return false;
-    }
-
-    uint8_t tx_buf[] = { OW_SKIP_ROM, DS18B20_READ_SCRATCHPAD };
-    line -> put_tx_buffer(tx_buf, 2, false);
-    line -> put_tx_buffer(NULL, DS18B20_SCRATCHPAD_LEN, true);
-    line -> start_rxtx(false);
+//    if (line -> is_busy()) {
+//        return false;
+//    }
+//
+//    uint8_t tx_buf[] = { OW_SKIP_ROM, DS18B20_READ_SCRATCHPAD };
+//    line -> put_tx_buffer(tx_buf, 2, false);
+//    line -> put_tx_buffer(NULL, DS18B20_SCRATCHPAD_LEN, true);
+//    line -> start_rxtx(false);
     return true;
 }
 

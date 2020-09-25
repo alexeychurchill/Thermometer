@@ -31,6 +31,7 @@ TARGET_BIN = $(DIR_BUILD)/$(TARGET_NAME).bin
 
 SRC = $(wildcard *.c) 
 SRC += $(CMSIS_SRC)
+SRC += onewire_stm32.c
 OBJ = $(addprefix $(DIR_OBJ)/, $(SRC:%.c=%.o))
 OBJ += $(addprefix $(DIR_OBJ)/, $(CMSIS_SRC_AS:%.s=%.o))
 

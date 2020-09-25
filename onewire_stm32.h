@@ -14,9 +14,13 @@ void ow_start_bus();
 
 bool ow_is_busy();
 
+OwOperation_t ow_get_operation();
+
 OwError_t ow_get_error();
 
-void ow_start_rxtx(bool wait_request);
+void ow_send_reset();
+
+void ow_start_rxtx();
 
 /**
  * Puts data / read slots to the transmission buffer
