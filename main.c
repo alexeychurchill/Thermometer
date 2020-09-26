@@ -1,6 +1,7 @@
 
 #include "stm32f1xx.h"
 #include <stdint.h>
+#include "rcc_setup.h"
 #include "uart.h"
 #include "gpio.h"
 #include "onewire.h"
@@ -35,36 +36,13 @@ void SysTick_Handler(void) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
 int main() {
-    RCC -> CR |= RCC_CR_HSEON;
-    while (!(RCC -> CR & RCC_CR_HSERDY)) ;
+    rcc_setup_clocking();
+    rcc_enable_peripherals_clocking();
 
-    RCC -> CFGR |= RCC_CFGR_PLLSRC;
-    RCC -> CFGR |= RCC_CFGR_PLLMULL9;
-    RCC -> CFGR |= RCC_CFGR_PPRE1_DIV2;
-    RCC -> CFGR |= RCC_CFGR_PPRE2_DIV1;
-
-    FLASH -> ACR |= FLASH_ACR_LATENCY_2;
-
-    RCC -> CR |= RCC_CR_PLLON;
-    while (!(RCC -> CR & RCC_CR_PLLRDY)) ;
-    
-    RCC -> CFGR |= RCC_CFGR_SW_PLL;
-    while (!(RCC -> CFGR & RCC_CFGR_SWS_PLL)) ;
-
-    SystemCoreClockUpdate();
-
-    uint32_t tick_count = SystemCoreClock / 1000000;
-    SysTick_Config(tick_count);
-
-    RCC -> APB2ENR |= RCC_APB2ENR_IOPCEN;
 
     gpio_setup(GPIOC, 13, GPIO_OUT_PP, GPIO_MODE_OUT_50MHZ);
 
     uart1_init();
-
-    RCC -> AHBENR |= RCC_AHBENR_DMA1EN;
-    RCC -> APB2ENR |= RCC_APB2ENR_IOPAEN;
-    RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
     gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ);
 
     ow_start_bus();
