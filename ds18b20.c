@@ -3,11 +3,11 @@
 #include <stddef.h>
 #include "utils.h"
 
-#define DS18B20_TEMP_BIT_OFFSET         4
-#define DS18B20_TEMP_MASK               (((int16_t) 0x7F) << DS18B20_TEMP_BIT_OFFSET)
-#define DS18B20_TEMP_SIGN_BIT_OFFSET    11
-#define DS18B20_TEMP_SIGN_MASK          (((int16_t) 0x1F) << DS18B20_TEMP_SIGN_BIT_OFFSET)
-#define DS18B20_SCRATCHPAD_LEN          9
+#define DS18B20_TEMP_BIT_OFFSET         4u
+#define DS18B20_TEMP_MASK               (((uint16_t) 0x7Fu) << DS18B20_TEMP_BIT_OFFSET)
+#define DS18B20_TEMP_SIGN_BIT_OFFSET    11u
+#define DS18B20_TEMP_SIGN_MASK          (((uint16_t) 0x1Fu) << DS18B20_TEMP_SIGN_BIT_OFFSET)
+#define DS18B20_SCRATCHPAD_LEN          9u
 #define DS18B20_FRAC_MUL                625u
 #define DS18B20_FRAC_MASK               0xFu
 
@@ -89,7 +89,10 @@ static void ds18b20_read_scratchpad_parse_data__(DS18B20Sensor_t *sensor) {
     uint8_t rx_buf[11];
     (sensor -> ow_bus) -> get_rx_buffer(rx_buf, 11);
 
-    sensor -> temp = (rx_buf[2] << 8u) | (rx_buf[3]);
+    uint16_t temp_msb = (uint16_t) rx_buf[3];
+    uint16_t temp_lsb = (uint16_t) rx_buf[2];
+
+    sensor -> temp = (temp_msb << 8u) | temp_lsb;
     sensor -> temp_hi = rx_buf[4];
     sensor -> temp_lo = rx_buf[5];
     sensor -> config = rx_buf[6];
@@ -168,22 +171,21 @@ void ds18b20_send_read_scratchpad(DS18B20Sensor_t *sensor) {
     ds18b20_read_scratchpad_reset__(sensor);
 }
 
-static FORCE_INLINE uint16_t ds18b20_hmi_temp_abs(uint16_t temp) {
-    int16_t t_signed = (int16_t) temp;
-    return (uint16_t) (t_signed < 0 ? -t_signed : t_signed);
+bool ds18b20_get_temp_sign(const DS18B20Sensor_t *sensor) {
+    int16_t sign_temp = (uint16_t) (sensor -> temp);
+    uint16_t abs_temp = abs_int16_t(sign_temp);
+    return (abs_temp & DS18B20_TEMP_SIGN_MASK) > 0;
 }
 
-uint8_t ds18b20_hmi_get_temp_int_absolute(uint16_t temp) {
-    uint16_t temp_abs = ds18b20_hmi_temp_abs(temp);
-    return (temp_abs & DS18B20_TEMP_MASK) >> DS18B20_TEMP_BIT_OFFSET;
+uint8_t ds18b20_get_temp_abs_int_part(const DS18B20Sensor_t *sensor) {
+    int16_t sign_temp = (uint16_t) (sensor -> temp);
+    uint16_t abs_temp = abs_int16_t(sign_temp);
+    return (abs_temp & DS18B20_TEMP_MASK) >> DS18B20_TEMP_BIT_OFFSET;
 }
 
-bool ds18b20_hmi_get_temp_sign(uint16_t temp) {
-    return (temp & DS18B20_TEMP_SIGN_MASK) > 0;
-}
-
-uint8_t ds18b20_hmi_get_temp_frac10000(uint16_t temp) {
-    uint16_t temp_abs = ds18b20_hmi_temp_abs(temp);
-    uint16_t temp_frac = (temp_abs & DS18B20_FRAC_MASK);
+uint8_t ds18b20_get_temp_abs_frac_part(const DS18B20Sensor_t *sensor) {
+    int16_t sign_temp = (uint16_t) (sensor -> temp);
+    uint16_t abs_temp = abs_int16_t(sign_temp);
+    uint16_t temp_frac = (abs_temp & DS18B20_FRAC_MASK);
     return temp_frac * DS18B20_FRAC_MUL;
 }

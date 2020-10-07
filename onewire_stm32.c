@@ -196,7 +196,7 @@ bool ow_is_busy() {
     return ow_busy ? true : false;
 }
 
-OwOperation_t get_operation() {
+OwOperation_t ow_get_operation() {
     return ow_operation;
 }
 
