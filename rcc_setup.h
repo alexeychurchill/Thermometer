@@ -29,6 +29,7 @@ static void rcc_setup_clocking() {
 static void rcc_enable_peripherals_clocking() {
     RCC -> AHBENR |= RCC_AHBENR_DMA1EN;
     RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN;
+    RCC -> APB1ENR |= RCC_APB1ENR_TIM3EN;
     RCC -> APB2ENR |= RCC_APB2ENR_IOPAEN;
     RCC -> APB2ENR |= RCC_APB2ENR_IOPCEN;
 }
