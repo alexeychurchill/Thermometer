@@ -21,9 +21,6 @@ static void rcc_setup_clocking() {
     while (!(RCC -> CFGR & RCC_CFGR_SWS_PLL)) ;
 
     SystemCoreClockUpdate();
-
-    uint32_t tick_count = SystemCoreClock / 1000000;
-    SysTick_Config(tick_count);
 }
 
 static void rcc_enable_peripherals_clocking() {
