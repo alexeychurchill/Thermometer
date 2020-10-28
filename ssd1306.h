@@ -4,10 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define INLINE inline __attribute__((always_inline))
 
-#define SSD1306_COM_PINS_ALTERNATIVE_CONFIG 0x1
-#define SSD1306_COM_PINS_ENABLE_LR_REMAP    0x1
+typedef void (*SSD1306SendFunc_t)(uint32_t, const uint8_t[]);
 
 typedef enum SSD1306Cmd {
     // Fundamental commands
@@ -45,6 +43,12 @@ typedef enum SSD1306Cmd {
     SSD1306_CMD_HW_SET_COM_SCAN_DIR_REMAP   = 0xC8,
     SSD1306_CMD_HW_SET_DISPLAY_OFFSET       = 0xD3,
     SSD1306_CMD_HW_SET_COM_PINS_CONFIG      = 0xDA,
+
+    // Timings & Driving scheme configuration commands
+    SSD1306_CMD_SET_DIV_RATIO_OSC_FREQ      = 0xD5,
+    SSD1306_CMD_SET_PRE_CHARGE_PERIOD       = 0xD9,
+    SSD1306_CMD_SET_VCOMH_DESELECT_LEVEL    = 0xDB,
+    SSD1306_CMD_NOP                         = 0xE3,
 } SSD1306Cmd_t;
 
 typedef enum SSD1306AddrMode {
@@ -59,6 +63,12 @@ typedef enum SSD1306CtrlByte {
     SSD1306_CTRL_CO_COMMAND                 = 0x80,
     SSD1306_CTRL_CO_DATA                    = 0xC0 // 0x80 | 0x40
 } SSD1306CtrlByte_t;
+
+typedef enum SSD1306DeselectLevel {
+    SSD1306_DESELECT_LEVEL_0_65VCC          = 0x00,
+    SSD1306_DESELECT_LEVEL_0_77VCC          = 0x20, // Reset value
+    SSD1306_DESELECT_LEVEL_0_83VCC          = 0x30,
+} SSD1306DeselectLevel_t;
 
 
 #endif //THERMOMETER_SSD1306_H
