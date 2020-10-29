@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 
-typedef void (*SSD1306SendFunc_t)(uint32_t, const uint8_t[]);
+typedef void (*SSD1306SendFunc_t)(const uint8_t*, uint32_t);
 
 typedef enum SSD1306Cmd {
     // Fundamental commands
@@ -49,13 +49,10 @@ typedef enum SSD1306Cmd {
     SSD1306_CMD_SET_PRE_CHARGE_PERIOD       = 0xD9,
     SSD1306_CMD_SET_VCOMH_DESELECT_LEVEL    = 0xDB,
     SSD1306_CMD_NOP                         = 0xE3,
-} SSD1306Cmd_t;
 
-typedef enum SSD1306AddrMode {
-    SSD1306_ADDR_MODE_HORIZONTAL            = 0x00,
-    SSD1306_ADDR_MODE_VERTICAL              = 0x01,
-    SSD1306_ADDR_MODE_PAGE                  = 0x02,
-} SSD1306AddrMode_t;
+    // Charge pump configuration commands
+    SSD1306_CMD_CHARGE_PUMP                 = 0x8D,
+} SSD1306Cmd_t;
 
 typedef enum SSD1306CtrlByte {
     SSD1306_CTRL_COMMAND                    = 0x00,
@@ -64,11 +61,27 @@ typedef enum SSD1306CtrlByte {
     SSD1306_CTRL_CO_DATA                    = 0xC0 // 0x80 | 0x40
 } SSD1306CtrlByte_t;
 
+typedef enum SSD1306AddrMode {
+    SSD1306_ADDR_MODE_HORIZONTAL            = 0x00,
+    SSD1306_ADDR_MODE_VERTICAL              = 0x01,
+    SSD1306_ADDR_MODE_PAGE                  = 0x02,
+} SSD1306AddrMode_t;
+
+typedef enum SSD1306COMPinsConfig {
+    SSD1306_COM_PINS_CONFIG_DEFAULT         = 0x02,
+    SSD1306_COM_PINS_CONFIG_ALTERNATIVE     = 0x12,
+    SSD1306_COM_PINS_CONFIG_LR_REMAP        = 0x22,
+} SSD1306COMPinsConfig_t;
+
 typedef enum SSD1306DeselectLevel {
     SSD1306_DESELECT_LEVEL_0_65VCC          = 0x00,
     SSD1306_DESELECT_LEVEL_0_77VCC          = 0x20, // Reset value
     SSD1306_DESELECT_LEVEL_0_83VCC          = 0x30,
 } SSD1306DeselectLevel_t;
 
+typedef enum SSD1306ChargePump {
+    SSD1306_CHARGE_PUMP_DISABLE             = 0x10,
+    SSD1306_CHARGE_PUMP_ENABLE              = 0x14,
+} SSD1306ChargePump_t;
 
 #endif //THERMOMETER_SSD1306_H
