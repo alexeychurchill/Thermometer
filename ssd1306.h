@@ -5,6 +5,38 @@
 #include <stdbool.h>
 
 
+#define SSD1306_DEF_CMD(name, cmd)                                                  \
+    inline __attribute__((always_inline)) void                                      \
+    ssd1306_##name(SSD1306SendFunc_t send_func) {                                   \
+        const uint8_t bytes[] = { SSD1306_CTRL_COMMAND, (uint8_t) (cmd) };          \
+        send_func(bytes, sizeof(bytes));                                            \
+    }
+
+#define SSD1306_DEF_CMD_WITH_ARG(name, cmd, arg_type, arg_name)                     \
+    inline __attribute__((always_inline)) void                                      \
+    ssd1306_##name(SSD1306SendFunc_t send_func, arg_type (arg_name)) {              \
+        const uint8_t bytes[] = {                                                   \
+            SSD1306_CTRL_COMMAND,                                                   \
+            (uint8_t) (arg_name)                                                    \
+        };                                                                          \
+        send_func(bytes, sizeof(bytes));                                            \
+    }
+
+#define SSD1306_DEF_CMD_SEND(cmd, data...)                                          \
+    {                                                                               \
+        const uint8_t bytes[] = {                                                   \
+            SSD1306_CTRL_COMMAND,                                                   \
+            (uint8_t) cmd,                                                          \
+            data                                                                    \
+        };                                                                          \
+        send_func(bytes, sizeof(bytes));                                            \
+    }
+
+#define SSD1306_DEF_CMD_WITH_ARGS(name, args...)                                    \
+    inline __attribute__((always_inline)) void                                      \
+    ssd1306_##name(SSD1306SendFunc_t send_func, args)
+
+
 typedef void (*SSD1306SendFunc_t)(const uint8_t*, uint32_t);
 
 typedef enum SSD1306Cmd {
