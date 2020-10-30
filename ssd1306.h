@@ -32,9 +32,18 @@
         send_func(bytes, sizeof(bytes));                                            \
     }
 
-#define SSD1306_DEF_CMD_WITH_ARGS(name, args...)                                    \
+#define SSD1306_MULTIPLE(args...)            args
+
+#define SSD1306_DEF_CMD_WITH_ARGS(name, cmd, args, data)                            \
     inline __attribute__((always_inline)) void                                      \
-    ssd1306_##name(SSD1306SendFunc_t send_func, args)
+    ssd1306_##name(SSD1306SendFunc_t send_bytes, args) {                            \
+        const uint8_t bytes[] = {                                                   \
+            SSD1306_CTRL_COMMAND,                                                   \
+            (uint8_t) (cmd),                                                        \
+            data                                                                    \
+        };                                                                          \
+        send_bytes(bytes, sizeof(bytes));                                           \
+    }
 
 
 typedef void (*SSD1306SendFunc_t)(const uint8_t*, uint32_t);
