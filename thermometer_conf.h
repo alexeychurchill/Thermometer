@@ -1,6 +1,10 @@
 #ifndef THERMOMETER_THERMOMETER_CONF_H
 #define THERMOMETER_THERMOMETER_CONF_H
 
+#include "stm32f1xx.h"
+
+#define POLL_TIMER (TIM3)
+
 #define TSD_MEASURE_PERIOD_MS               450
 
 #endif //THERMOMETER_THERMOMETER_CONF_H

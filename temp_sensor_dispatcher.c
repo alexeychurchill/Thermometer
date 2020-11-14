@@ -38,7 +38,7 @@ static void (*therm_state_table[])() = {
         [TS_TEMP_READ]      = tsd_handle_state_read
 };
 
-void tsd_init(OwBusLine_t *line) {
+void tsd_init(const OwBusLine_t *line) {
     state = TS_IDLE;
     ds18b20_init(line, &sensor);
 }
@@ -51,7 +51,7 @@ void tsd_dispatch_state() {
     therm_state_table[state]();
 }
 
-uint32_t tsd_get_t() {
+int32_t tsd_get_t() {
     int32_t temp_int = ((int32_t) ds18b20_get_temp_abs_int_part(&sensor)) * 100;
     int32_t temp_frac = (int32_t) ds18b20_get_temp_abs_frac_part(&sensor) / 100;
     int32_t temp_abs = temp_int + temp_frac;
