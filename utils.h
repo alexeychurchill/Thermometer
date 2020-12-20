@@ -13,8 +13,23 @@
                                                 return (outtype) (x >= 0 ? x : -x);              \
                                             }
 
+#define DEF_CLAMP(type)                     FORCE_INLINE type clamp_##type( \
+                                                const type x,               \
+                                                const type min,             \
+                                                const type max              \
+                                            ) { \
+                                                return ((x < min) ? min : ((x > max) ? max : x));\
+                                            }
+
 DEF_ABS(int32_t, uint32_t)
 DEF_ABS(int16_t, uint16_t)
 DEF_ABS(int8_t, uint8_t)
+
+DEF_CLAMP(uint32_t)
+DEF_CLAMP(int32_t)
+DEF_CLAMP(uint16_t)
+DEF_CLAMP(int16_t)
+DEF_CLAMP(uint8_t)
+DEF_CLAMP(int8_t)
 
 #endif

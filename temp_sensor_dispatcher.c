@@ -1,5 +1,5 @@
 #include "temp_sensor_dispatcher.h"
-#include "thermometer_conf.h"
+#include "config.h"
 #include "ds18b20.h"
 #include "poll_timer.h"
 
