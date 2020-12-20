@@ -11,6 +11,7 @@
 #define SSD1306_COL_MASK                     0x7Fu
 #define SSD1306_ROW_MASK                     0x3Fu
 #define SSD1306_SCROLL_INTERVAL_MASK         0x07u
+#define SSD1306_PIXEL_PER_PAGE               0x08u
 
 
 #define SSD1306_DEF_CMD(name, cmd)                                                  \
