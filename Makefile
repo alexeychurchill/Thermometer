@@ -29,7 +29,8 @@ TARGET_NAME = therm_fw
 TARGET_ELF = $(DIR_BUILD)/$(TARGET_NAME).elf
 TARGET_BIN = $(DIR_BUILD)/$(TARGET_NAME).bin
 
-SRC = $(wildcard *.c) 
+SRC = $(wildcard *.c)
+SRC += ./ui/ui_screen_temp.c
 SRC += $(CMSIS_SRC)
 SRC += onewire_stm32.c
 OBJ = $(addprefix $(DIR_OBJ)/, $(SRC:%.c=%.o))

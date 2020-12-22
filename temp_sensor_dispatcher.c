@@ -44,6 +44,7 @@ void tsd_init(const OwBusLine_t *line) {
 }
 
 void tsd_dispatch_state() {
+    ds18b20_dispatch(&sensor);
     if (ds18b20_is_busy(&sensor)) {
         return;
     }
@@ -52,9 +53,7 @@ void tsd_dispatch_state() {
 }
 
 int32_t tsd_get_t() {
-    int32_t temp_int = ((int32_t) ds18b20_get_temp_abs_int_part(&sensor)) * 100;
-    int32_t temp_frac = (int32_t) ds18b20_get_temp_abs_frac_part(&sensor) / 100;
-    int32_t temp_abs = temp_int + temp_frac;
+    int32_t temp_int = ((int32_t) ds18b20_get_temp_abs_int_part(&sensor));
     bool temp_sign = ds18b20_get_temp_sign(&sensor);
-    return temp_sign ? -temp_abs : temp_abs;
+    return temp_sign ? -temp_int : temp_int;
 }
