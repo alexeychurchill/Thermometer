@@ -41,6 +41,7 @@ set(
         poll_timer.c
         temp_sensor_dispatcher.c
         uart.c
+        buttons.c
         ui/ui_screen_temp.c
 )
 
