@@ -6,11 +6,12 @@
 #include "utf8.h"
 #include "utils.h"
 
-#define SPACE_CHAR (' ')
+#define SPACE_CHAR                      (' ')
 
-#define DISPLAY_PAGE_COUNT (DISPLAY_HEIGHT / SSD1306_PIXEL_PER_PAGE)
-#define DISPLAY_PAGE_MIN (0u)
-#define DISPLAY_PAGE_MAX (DISPLAY_PAGE_COUNT - 1u)
+#define DISPLAY_PAGE_COUNT              (DISPLAY_HEIGHT / SSD1306_PIXEL_PER_PAGE)
+#define DISPLAY_PAGE_MIN                0x0u
+#define DISPLAY_PAGE_MAX                (DISPLAY_PAGE_COUNT - 1u)
+#define DISPLAY_PAGE_FULL_GLOW          0xFFu
 
 
 static uint8_t display_buffer[DISPLAY_BUFFER_SIZE];
@@ -188,6 +189,13 @@ void display_buffer_put_text(const uint8_t text[], uint32_t max_length) {
         }
 
         hor_offset += glyph_w;
+    }
+}
+
+void display_buffer_invert(uint8_t page, uint8_t x_start, uint8_t x_end) {
+    uint32_t buf_offset = page * DISPLAY_WIDTH;
+    for (uint8_t x = x_start; x <= x_end; x++) {
+        display_buffer[buf_offset + x] ^= DISPLAY_PAGE_FULL_GLOW;
     }
 }
 
