@@ -14,7 +14,7 @@ typedef struct UiDisplay {
     void (*text_set_offset_x)(int8_t offset_x);
     void (*text_set_align)(TextAlign_t align);
     void (*text_set_font)(const uint8_t* (*glyph_lookup_func)(uint32_t));
-    void (*put_text)(const uint8_t text[], uint32_t max_chars);
+    void (*put_text)(const uint8_t text[]);
     void (*invert)(uint8_t page, uint8_t x_start, uint8_t x_end);
 } UiDisplay_t;
 

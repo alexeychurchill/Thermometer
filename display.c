@@ -13,6 +13,13 @@
 #define DISPLAY_PAGE_MAX                (DISPLAY_PAGE_COUNT - 1u)
 #define DISPLAY_PAGE_FULL_GLOW          0xFFu
 
+/**
+ * This string length limit doesn't have any practical
+ * purpose but to prevent overflows, infinite loops,
+ * wrong strings without '\0' etc., i.e. just for safety.
+ */
+#define DISPLAY_STRING_MAX_LEN          65u
+
 
 static uint8_t display_buffer[DISPLAY_BUFFER_SIZE];
 
@@ -149,19 +156,18 @@ void display_text_set_font(const uint8_t* (*glyph_lookup_func)(uint32_t)) {
  * for iteration over UTF-8 strings
  *
  * @param text
- * @param max_length
  */
-void display_buffer_put_text(const uint8_t text[], uint32_t max_length) {
+void display_buffer_put_text(const uint8_t text[]) {
     if (text_glyph_lookup == NULL) {
         return;
     }
 
-    uint32_t text_w = display_text_width(text, max_length, text_glyph_lookup);
+    uint32_t text_w = display_text_width(text, DISPLAY_STRING_MAX_LEN, text_glyph_lookup);
     uint8_t hor_offset = display_text_get_hor_offset(text_w, text_align, text_offset_x);
 
     uint32_t char_index = 0;
 
-    while (text[char_index] != '\0' && char_index < max_length) {
+    while (text[char_index] != '\0' && char_index < DISPLAY_STRING_MAX_LEN) {
         if (text[char_index] == SPACE_CHAR) {
             char_index++;
             hor_offset += DISPLAY_SPACE_WIDTH;

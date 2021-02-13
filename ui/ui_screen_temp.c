@@ -63,12 +63,12 @@ void ui_screen_temp_draw(const UiDisplay_t *display) {
 
     display -> text_set_page(0);
     display -> text_set_font(ssd1306_bebas_neue_16_get_glyph);
-    display -> put_text(RES_STR_SCR_TEMP_TITLE, 100);
+    display -> put_text(RES_STR_SCR_TEMP_TITLE);
 
     display -> text_set_page(3);
     display -> text_set_font(ssd1306_arial_black_24_get_glyph);
 
     if (num_to_str(tsd_get_t(), temp_str_buffer, TEMP_BUFFER_LEN)) {
-        display -> put_text(temp_str_buffer, TEMP_BUFFER_LEN);
+        display -> put_text(temp_str_buffer);
     }
 }

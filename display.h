@@ -15,7 +15,7 @@ void display_text_set_page(uint8_t page);
 void display_text_set_offset_x(int8_t offset_x);
 void display_text_set_align(TextAlign_t align);
 void display_text_set_font(const uint8_t* (*glyph_lookup_func)(uint32_t));
-void display_buffer_put_text(const uint8_t text[], uint32_t max_length);
+void display_buffer_put_text(const uint8_t text[]);
 void display_buffer_invert(uint8_t page, uint8_t x_start, uint8_t x_end);
 
 void display_flush();
