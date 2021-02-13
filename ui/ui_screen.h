@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../text.h"
+#include "../buttons.h"
 
 
 typedef struct UiDisplay {
@@ -19,6 +20,7 @@ typedef struct UiDisplay {
 
 typedef struct UiScreen {
     void (*draw)(const UiDisplay_t*);
+    void (*handle_button)(const HmiBtnEvent_t event);
 } UiScreen_t;
 
 #endif //THERMOMETER_UI_SCREEN_H
