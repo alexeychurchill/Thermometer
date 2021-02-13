@@ -13,8 +13,8 @@
 #define HMI_BTN_TIM                                     TIM4
 #define HMI_BTN_TIM_IRQ_N                               TIM4_IRQn
 
-#define HMI_BTN_LEFT_GPIO GPIOB
-#define HMI_BTN_LEFT_PIN 3
+#define HMI_BTN_RIGHT_GPIO                              GPIOB
+#define HMI_BTN_RIGHT_PIN                               3
 
 static HmiBtnEvent_t s_event = {
         .btn = HMI_BTN_NONE,
@@ -54,7 +54,7 @@ static FORCE_INLINE void __tim_handle_tick();
 // IRQ Handlers
 
 void EXTI3_IRQHandler(void) {
-    __handle_exti(HMI_BTN_LEFT, HMI_BTN_LEFT_GPIO, HMI_BTN_LEFT_PIN, EXTI_PR_PIF3);
+    __handle_exti(HMI_BTN_RIGHT, HMI_BTN_RIGHT_GPIO, HMI_BTN_RIGHT_PIN, EXTI_PR_PIF3);
 }
 
 void TIM4_IRQHandler(void) {
