@@ -9,6 +9,14 @@
 #define UINT8_BIT_MASK(bit_n)               (((uint8_t)0x1) << (bit_n))
 #define UINT8_BIT_VALUE(number, bit_n)      (((number) & UINT8_BIT_MASK(bit_n)) >> (bit_n))
 
+#define LENGTH_OF(array)                    ({  \
+    uint32_t sz = 0;                            \
+    if (sizeof(array) > 0) {                    \
+        sz = sizeof(array) / sizeof(array[0]);  \
+    }                                           \
+    sz;                                         \
+})
+
 #define DEF_ABS(intype, outtype)            FORCE_INLINE outtype abs_##intype(const intype x) { \
                                                 return (outtype) (x >= 0 ? x : -x);              \
                                             }
