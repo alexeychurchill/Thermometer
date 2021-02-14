@@ -19,6 +19,7 @@ typedef struct UiDisplay {
 } UiDisplay_t;
 
 typedef struct UiScreen {
+    void (*start)();
     void (*draw)(const UiDisplay_t*);
     void (*handle_button)(const HmiBtnEvent_t event);
 } UiScreen_t;
