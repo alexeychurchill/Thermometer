@@ -23,7 +23,10 @@ set(FONT_GEN_PATH fonts_src)
 
 add_custom_target(gen_fonts)
 add_custom_command(
-        TARGET gen_fonts
+        OUTPUT
+            ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_16.c
+            ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_16.h
+
         USES_TERMINAL
 
         BYPRODUCTS ${FONT_GEN_PATH}
@@ -75,8 +78,6 @@ set(
 list(APPEND SOURCES ${FONT_GEN_SOURCES})
 
 add_executable(${PROJECT_NAME}.elf ${SOURCES})
-
-add_dependencies(${PROJECT_NAME}.elf gen_fonts)
 
 add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${PROJECT_NAME}.elf)
 add_custom_command(
