@@ -1,6 +1,6 @@
 #include "ui_screen_temp.h"
 #include "../config.h"
-#include "fonts/bebas_neue_16.h"
+#include "bebas_16.h"
 #include "fonts/arial_black_24.h"
 #include "../text_res.h"
 #include <stddef.h>
@@ -62,7 +62,7 @@ void ui_screen_temp_draw(const UiDisplay_t *display) {
     display -> text_set_align(TEXT_ALIGN_CENTER);
 
     display -> text_set_page(0);
-    display -> text_set_font(ssd1306_bebas_neue_16_get_glyph);
+    display -> text_set_font(ssd1306_bebas_16_get_glyph);
     display -> put_text(RES_STR_SCR_TEMP_TITLE);
 
     display -> text_set_page(3);
