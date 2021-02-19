@@ -33,7 +33,7 @@ add_custom_command(
             --out_dir ${FONT_GEN_PATH}
             --cname bebas_16
             --glyph_height 16
-            --chars А-Я
+            --chars А-Я а-я І і Ї ї Ґ ґ 0-9 . , +
 )
 
 set(FONT_GEN_SOURCES ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_16.c)
