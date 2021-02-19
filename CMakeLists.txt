@@ -30,6 +30,9 @@ add_custom_command(
 
         COMMAND python3 ${FONT_GEN_UTIL}
             ${PROJECT_SOURCE_DIR}/fonts/Bebas_Neue_Cyrillic.ttf
+            -hor
+            -fl 1
+            -fr 1
             --out_dir ${FONT_GEN_PATH}
             --cname bebas_16
             --glyph_height 16
