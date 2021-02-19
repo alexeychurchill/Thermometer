@@ -32,7 +32,7 @@ add_custom_command(
         BYPRODUCTS ${FONT_GEN_PATH}
 
         COMMAND python3 ${FONT_GEN_UTIL}
-            ${PROJECT_SOURCE_DIR}/fonts/Bebas_Neue_Cyrillic.ttf
+            ${PROJECT_SOURCE_DIR}/fonts/AA-BebasNeue.ttf
             -hor
             -fl 1
             -fr 1
