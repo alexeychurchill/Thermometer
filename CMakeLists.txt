@@ -73,6 +73,7 @@ set(
         uart.c
         buttons.c
         ui/screen_dispatcher.c
+        ui/ui_scr_common.c
         ui/ui_scr_construction.c
         ui/ui_screen_temp.c
 )
