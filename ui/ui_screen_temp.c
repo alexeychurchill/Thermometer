@@ -5,6 +5,9 @@
 #include "../text_res.h"
 #include <stddef.h>
 #include "../temp_sensor_dispatcher.h"
+#include "../buttons.h"
+#include "ui_screen.h"
+#include "ui_mode_dispatcher.h"
 
 #define TEMP_BUFFER_LEN 16u
 
@@ -72,3 +75,19 @@ void ui_screen_temp_draw(const UiDisplay_t *display) {
         display -> put_text(temp_str_buffer);
     }
 }
+
+static void __ui_scr_temp_start() {
+    // No op
+}
+
+static void __ui_scr_temp_handle_button(HmiBtnEvent_t event) {
+    if (event.btn == HMI_BTN_ENTER && event.type == HMI_BTN_EVENT_LONG_PRESS) {
+        // TODO: Go to menu
+    }
+}
+
+const UiScreen_t UI_SCREEN_TEMP = {
+        .start = __ui_scr_temp_start,
+        .draw = ui_screen_temp_draw,
+        .handle_button = __ui_scr_temp_handle_button
+};
