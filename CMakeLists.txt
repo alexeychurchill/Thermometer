@@ -76,6 +76,7 @@ set(
         ui/ui_scr_common.c
         ui/ui_scr_construction.c
         ui/ui_screen_temp.c
+        ui/scr_menu.c
 )
 
 list(APPEND SOURCES ${FONT_GEN_SOURCES})
