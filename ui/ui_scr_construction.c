@@ -1,6 +1,7 @@
 #include "ui_scr_construction.h"
 #include "ui_screen.h"
 #include "../buttons.h"
+#include "ui_mode_dispatcher.h"
 
 #include "../text_res.h"
 
@@ -52,5 +53,7 @@ static void __scr_construction_draw(const UiDisplay_t *display) {
 }
 
 static void __scr_construction_handle_buttons(const HmiBtnEvent_t event) {
-    // TODO: Open menu on LONG-PRESS ENTER
+    if (event.btn == HMI_BTN_ENTER && event.type != HMI_BTN_EVENT_LONG_PRESS) {
+        ui_mode_dispr_set(UI_MODE_MENU);
+    }
 }

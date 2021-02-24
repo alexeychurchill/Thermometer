@@ -187,7 +187,7 @@ static void __ui_scr_menu_draw(const UiDisplay_t *display) {
 static void __ui_scr_menu_handle_button(const HmiBtnEvent_t event) {
     if (event.btn == HMI_BTN_RIGHT && event.type == HMI_BTN_EVENT_PRESS) {
         __ui_scr_menu_sel_next();
-    } else if (event.btn == HMI_BTN_RIGHT && event.type == HMI_BTN_EVENT_PRESS) {
+    } else if (event.btn == HMI_BTN_LEFT && event.type == HMI_BTN_EVENT_PRESS) {
         __ui_scr_menu_sel_prev();
     } else if (event.btn == HMI_BTN_ENTER && event.type == HMI_BTN_EVENT_PRESS) {
         ui_mode_dispr_set(s_mode_current);

@@ -82,7 +82,7 @@ static void __ui_scr_temp_start() {
 
 static void __ui_scr_temp_handle_button(HmiBtnEvent_t event) {
     if (event.btn == HMI_BTN_ENTER && event.type == HMI_BTN_EVENT_LONG_PRESS) {
-        // TODO: Go to menu
+        ui_mode_dispr_set(UI_MODE_MENU);
     }
 }
 

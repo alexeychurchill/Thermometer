@@ -13,6 +13,12 @@
 #define HMI_BTN_TIM                                     TIM4
 #define HMI_BTN_TIM_IRQ_N                               TIM4_IRQn
 
+#define HMI_BTN_LEFT_GPIO                               GPIOB
+#define HMI_BTN_LEFT_PIN                                5
+
+#define HMI_BTN_ENTER_GPIO                              GPIOB
+#define HMI_BTN_ENTER_PIN                               4
+
 #define HMI_BTN_RIGHT_GPIO                              GPIOB
 #define HMI_BTN_RIGHT_PIN                               3
 
@@ -57,6 +63,18 @@ void EXTI3_IRQHandler(void) {
     __handle_exti(HMI_BTN_RIGHT, HMI_BTN_RIGHT_GPIO, HMI_BTN_RIGHT_PIN, EXTI_PR_PIF3);
 }
 
+void EXTI4_IRQHandler(void) {
+    if (EXTI->PR & EXTI_PR_PIF4) {
+        __handle_exti(HMI_BTN_ENTER, HMI_BTN_ENTER_GPIO, HMI_BTN_ENTER_PIN, EXTI_PR_PIF4);
+    }
+}
+
+void EXTI9_5_IRQHandler(void) {
+    if (EXTI->PR & EXTI_PR_PIF5) {
+        __handle_exti(HMI_BTN_LEFT, HMI_BTN_LEFT_GPIO, HMI_BTN_LEFT_PIN, EXTI_PR_PIF5);
+    }
+}
+
 void TIM4_IRQHandler(void) {
     if ((HMI_BTN_TIM->SR & TIM_SR_UIF) == TIM_SR_UIF) {
         __tim_handle_tick();
@@ -76,18 +94,23 @@ void hmi_btn_init() {
     NVIC_EnableIRQ(HMI_BTN_TIM_IRQ_N);
 
     // Left button
+    gpio_setup(HMI_BTN_LEFT_GPIO, HMI_BTN_LEFT_PIN, GPIO_IN_FLOATING, GPIO_MODE_IN);
+    AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI5_PB;
+    EXTI->FTSR |= EXTI_FTSR_FT5;
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
 
-    gpio_setup(GPIOB, 3, GPIO_IN_FLOATING, GPIO_MODE_IN);
+    // Enter button
+    gpio_setup(HMI_BTN_ENTER_GPIO, HMI_BTN_ENTER_PIN, GPIO_IN_FLOATING, GPIO_MODE_IN);
+    AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI4_PB;
+    EXTI->FTSR |= EXTI_FTSR_FT4;
+    NVIC_EnableIRQ(EXTI4_IRQn);
+
+    // Right button
+    gpio_setup(HMI_BTN_RIGHT_GPIO, HMI_BTN_RIGHT_PIN, GPIO_IN_FLOATING, GPIO_MODE_IN);
     AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
     AFIO->EXTICR[0] |= AFIO_EXTICR1_EXTI3_PB;
     EXTI->FTSR |= EXTI_FTSR_FT3;
     NVIC_EnableIRQ(EXTI3_IRQn);
-
-    // Enter button
-    // TODO
-
-    // Right button
-    // TODO
 
     __enable_exti();
 }
@@ -106,14 +129,27 @@ const HmiBtnEvent_t hmi_btn_poll_event() {
 }
 
 // Internal functions implementations
-
+/**
+ * TODO: Improve, make more safe
+ */
 static FORCE_INLINE void __enable_exti() {
     EXTI->PR |= EXTI_PR_PIF3;
     EXTI->IMR |= EXTI_IMR_IM3;
+
+    EXTI->PR |= EXTI_PR_PIF4;
+    EXTI->IMR |= EXTI_IMR_IM4;
+
+    EXTI->PR |= EXTI_PR_PIF5;
+    EXTI->IMR |= EXTI_IMR_IM5;
 }
 
+/**
+ * TODO: Improve, make more safe
+ */
 static FORCE_INLINE void __disable_exti() {
     EXTI->IMR &= ~EXTI_IMR_IM3;
+    EXTI->IMR &= ~EXTI_IMR_IM4;
+    EXTI->IMR &= ~EXTI_IMR_IM5;
 }
 
 static FORCE_INLINE void __handle_exti(
