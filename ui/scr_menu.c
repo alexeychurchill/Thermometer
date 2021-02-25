@@ -5,7 +5,7 @@
 #include "../ssd1306.h"
 #include "../display.h"
 #include "ui_mode_dispatcher.h"
-#include "ui_scr_common.h"
+#include "scr_common.h"
 #include "ui_scr_construction.h"
 #include "ui_screen_temp.h"
 
@@ -161,7 +161,7 @@ static void __ui_scr_menu_draw(const UiDisplay_t *display) {
     display->clear();
 
     display->text_set_font(ssd1306_bebas_16_get_glyph);
-    ui_scr_draw_title(display, RES_STR_SCR_MENU_TITLE);
+    scr_common_draw_title(display, RES_STR_SCR_MENU_TITLE);
 
     display->text_set_align(TEXT_ALIGN_LEFT);
     display->text_set_font(ssd1306_bebas_16_get_glyph);
