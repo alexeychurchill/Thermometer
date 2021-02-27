@@ -6,7 +6,7 @@
 #include "../display.h"
 #include "ui_mode_dispatcher.h"
 #include "scr_common.h"
-#include "ui_scr_construction.h"
+#include "scr_construction.h"
 #include "ui_screen_temp.h"
 
 #include "../text_res.h"

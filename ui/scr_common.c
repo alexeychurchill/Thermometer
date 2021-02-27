@@ -2,7 +2,7 @@
 #include "../ssd1306.h"
 #include "../display.h"
 
-void ui_scr_draw_title(const UiDisplay_t *display, const uint8_t *title_text) {
+void scr_common_draw_title(const UiDisplay_t *display, const uint8_t *title_text) {
     uint8_t title_line_y = SCR_COMMON_TITLE_DELIMITER_Y;
     for (uint8_t x = 0; x < DISPLAY_WIDTH; x++) {
         display -> put_pixel(x, title_line_y);

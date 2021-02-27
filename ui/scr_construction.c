@@ -1,4 +1,4 @@
-#include "ui_scr_construction.h"
+#include "scr_construction.h"
 #include "ui_screen.h"
 #include "../buttons.h"
 #include "ui_mode_dispatcher.h"
@@ -53,7 +53,7 @@ static void __scr_construction_draw(const UiDisplay_t *display) {
 }
 
 static void __scr_construction_handle_buttons(const HmiBtnEvent_t event) {
-    if (event.btn == HMI_BTN_ENTER && event.type != HMI_BTN_EVENT_LONG_PRESS) {
+    if (event.btn == HMI_BTN_ENTER) {
         ui_mode_dispr_set(UI_MODE_MENU);
     }
 }

@@ -74,7 +74,7 @@ set(
         buttons.c
         ui/ui_mode_dispatcher.c
         ui/scr_common.c
-        ui/ui_scr_construction.c
+        ui/scr_construction.c
         ui/ui_screen_temp.c
         ui/scr_menu.c
 )

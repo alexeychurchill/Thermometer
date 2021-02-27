@@ -6,7 +6,7 @@
 
 #include "./ui_screen_temp.h"
 #include "./scr_menu.h"
-#include "./ui_scr_construction.h"
+#include "./scr_construction.h"
 
 static UiMode_t s_mode = UI_MODE_NONE;
 static UiDisplay_t *s_display = NULL;
