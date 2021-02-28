@@ -35,8 +35,6 @@ void ui_mode_dispr_set(const UiMode_t mode) {
     if (scr->start != NULL) {
         scr->start();
     }
-
-    s_scr_current = scr;
 }
 
 const UiMode_t ui_mode_dispr_get() {
@@ -44,14 +42,16 @@ const UiMode_t ui_mode_dispr_get() {
 }
 
 void ui_mode_dispr_dispatch() {
-    if (s_scr_current == NULL || s_display == NULL) {
+    if (s_display == NULL) {
         return;
     }
 
+    const UiScreen_t *scr = MODES_SCREENS[s_mode];
+
     if (hmi_btn_has_event()) {
         HmiBtnEvent_t btn_event = hmi_btn_poll_event();
-        s_scr_current->handle_button(btn_event);
+        scr->handle_button(btn_event);
     }
 
-    s_scr_current->draw(s_display);
+    scr->draw(s_display);
 }

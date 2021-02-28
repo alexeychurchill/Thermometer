@@ -137,7 +137,17 @@ static void __ui_scr_menu_cursor_init(uint32_t start_index) {
 }
 
 static void __ui_scr_menu_start() {
-    __ui_scr_menu_cursor_init(ui_mode_dispr_get());
+    UiMode_t mode = ui_mode_dispr_get();
+
+    uint32_t item_index;
+    for (item_index = 0u; item_index < LENGTH_OF(MENU); item_index++) {
+        if (MENU[item_index].mode == mode) {
+            __ui_scr_menu_cursor_init(item_index);
+            return;
+        }
+    }
+
+    __ui_scr_menu_cursor_init(0u);
 }
 
 static void __ui_scr_menu_draw(const UiDisplay_t *display) {
