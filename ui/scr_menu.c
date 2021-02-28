@@ -55,7 +55,6 @@ static const MenuItem_t MENU[] = {
 
 static uint32_t s_menu_cursor_pos = 0u;
 static uint32_t s_menu_item_first = 0u;
-static UiMode_t s_mode_current = UI_MODE_TIME;
 
 static FORCE_INLINE uint32_t __ui_scr_menu_item_count() {
     return LENGTH_OF(MENU);
@@ -75,12 +74,6 @@ static FORCE_INLINE uint32_t __ui_scr_menu_draw_count() {
 }
 
 static void __ui_scr_menu_sel_next() {
-    if (UI_MODE_NONE == s_mode_current) {
-        return;
-    }
-
-    s_mode_current = (s_mode_current + 1u) % UI_MODE_COUNT;
-
     uint32_t menu_item_count = __ui_scr_menu_item_count();
     if (menu_item_count <= 0) {
         return;
@@ -106,14 +99,6 @@ static void __ui_scr_menu_sel_next() {
 }
 
 static void __ui_scr_menu_sel_prev() {
-    if (UI_MODE_NONE == s_mode_current) {
-        return;
-    }
-
-    if (s_mode_current == 0x0u) {
-        s_mode_current = (UI_MODE_COUNT - 1u);
-    }
-
     if (s_menu_cursor_pos > 0) {
         s_menu_cursor_pos--;
     } else if (s_menu_item_first > 0) {
@@ -130,8 +115,6 @@ static void __ui_scr_menu_cursor_init(uint32_t start_index) {
     if (count == 0 || start_index >= UI_MODE_COUNT) {
         return;
     }
-
-    s_mode_current = start_index;
 
     // The most first menu item
     if (0u == start_index) {
@@ -184,12 +167,18 @@ static void __ui_scr_menu_draw(const UiDisplay_t *display) {
     }
 }
 
+static void __scr_menu_pick() {
+    uint32_t item_index = s_menu_item_first + s_menu_cursor_pos;
+    UiMode_t mode = MENU[item_index].mode;
+    ui_mode_dispr_set(mode);
+}
+
 static void __ui_scr_menu_handle_button(const HmiBtnEvent_t event) {
     if (event.btn == HMI_BTN_RIGHT && event.type == HMI_BTN_EVENT_PRESS) {
         __ui_scr_menu_sel_next();
     } else if (event.btn == HMI_BTN_LEFT && event.type == HMI_BTN_EVENT_PRESS) {
         __ui_scr_menu_sel_prev();
     } else if (event.btn == HMI_BTN_ENTER && event.type == HMI_BTN_EVENT_PRESS) {
-        ui_mode_dispr_set(s_mode_current);
+        __scr_menu_pick();
     }
 }

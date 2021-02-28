@@ -25,7 +25,7 @@ void ui_mode_dispr_init(const UiDisplay_t *display) {
 }
 
 void ui_mode_dispr_set(const UiMode_t mode) {
-    if (mode < 0x0u || mode >= (UI_MODE_COUNT - 0x1u)) {
+    if (UI_MODE_COUNT <= mode) {
         return;
     }
 
