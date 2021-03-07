@@ -72,6 +72,7 @@ set(
         temp_sensor_dispatcher.c
         uart.c
         buttons.c
+        rtc.c
         ui/ui_mode_dispatcher.c
         ui/scr_common.c
         ui/scr_construction.c

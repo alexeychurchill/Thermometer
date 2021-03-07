@@ -33,6 +33,8 @@ static void rcc_enable_peripherals_clocking() {
     RCC -> APB2ENR |= RCC_APB2ENR_IOPBEN;
     RCC -> APB2ENR |= RCC_APB2ENR_IOPCEN;
     RCC -> APB2ENR |= RCC_APB2ENR_AFIOEN;
+    RCC -> APB1ENR |= RCC_APB1ENR_PWREN;
+    RCC -> APB1ENR |= RCC_APB1ENR_BKPEN;
 }
 
 #endif //THERMOMETER_RCC_SETUP_H
