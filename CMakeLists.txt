@@ -21,11 +21,12 @@ set(CMAKE_C_FLAGS "\
 
 set(FONT_GEN_PATH fonts_src)
 
-add_custom_target(gen_fonts)
 add_custom_command(
         OUTPUT
             ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_16.c
             ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_16.h
+            ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_24.c
+            ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_24.h
 
         USES_TERMINAL
 
@@ -40,9 +41,24 @@ add_custom_command(
             --cname bebas_16
             --glyph_height 16
             --chars А-Я а-я І і Ї ї Ґ ґ 0-9 . , +
+
+        COMMAND python3 ${FONT_GEN_UTIL}
+            ${PROJECT_SOURCE_DIR}/fonts/AA-BebasNeue.ttf
+            -hor
+            -fl 1
+            -fr 1
+            --out_dir ${FONT_GEN_PATH}
+            --cname bebas_24
+            --glyph_height 24
+            --glyph_width_equal
+            --chars 0-9 :
 )
 
-set(FONT_GEN_SOURCES ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_16.c)
+set(
+        FONT_GEN_SOURCES
+            ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_16.c
+            ${PROJECT_BINARY_DIR}/${FONT_GEN_PATH}/bebas_24.c
+)
 
 # Firmware build process
 
@@ -73,11 +89,13 @@ set(
         uart.c
         buttons.c
         rtc.c
+        time_format.c
         ui/ui_mode_dispatcher.c
         ui/scr_common.c
         ui/scr_construction.c
         ui/ui_screen_temp.c
         ui/scr_menu.c
+        ui/scr_time.c
 )
 
 list(APPEND SOURCES ${FONT_GEN_SOURCES})
