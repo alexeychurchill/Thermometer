@@ -7,6 +7,8 @@
 
 static const uint8_t RES_STR_SCR_TEMP_TITLE[] = "Температура";
 
+RES_TEXT(SCR_INIT_CAPTION, "Привіт")
+
 RES_TEXT(SCR_MENU_TITLE, "МЕНЮ")
 RES_TEXT(SCR_MENU_TEMPERATURE, "Термометр")
 RES_TEXT(SCR_MENU_TIME, "Час")

@@ -40,7 +40,7 @@ add_custom_command(
             --out_dir ${FONT_GEN_PATH}
             --cname bebas_16
             --glyph_height 16
-            --chars А-Я а-я І і Ї ї Ґ ґ 0-9 . , +
+            --chars А-Я а-я І і Ї ї Ґ ґ Є є 0-9 . , + ! :
 
         COMMAND python3 ${FONT_GEN_UTIL}
             ${PROJECT_SOURCE_DIR}/fonts/AA-BebasNeue.ttf
@@ -92,6 +92,7 @@ set(
         time_format.c
         ui/ui_mode_dispatcher.c
         ui/scr_common.c
+        ui/scr_init.c
         ui/scr_construction.c
         ui/ui_screen_temp.c
         ui/scr_menu.c
