@@ -17,6 +17,7 @@
 #define UI_SCREEN_MENU_VER_OFFSET 0x02u
 
 #define UI_SCREEN_MENU_ITEM_HEIGHT 0x02u
+#define SCR_MENU_LAST_PICKED_DEFAULT 0x0u
 
 static void __ui_scr_menu_start();
 static void __ui_scr_menu_draw(const UiDisplay_t *display);
@@ -54,6 +55,7 @@ static const MenuItem_t MENU[] = {
 };
 
 static uint32_t s_menu_cursor_pos = 0u;
+static uint32_t s_menu_last_picked = SCR_MENU_LAST_PICKED_DEFAULT;
 static uint32_t s_menu_item_first = 0u;
 
 static FORCE_INLINE uint32_t __ui_scr_menu_item_count() {
@@ -137,17 +139,7 @@ static void __ui_scr_menu_cursor_init(uint32_t start_index) {
 }
 
 static void __ui_scr_menu_start() {
-    UiMode_t mode = ui_mode_dispr_get();
-
-    uint32_t item_index;
-    for (item_index = 0u; item_index < LENGTH_OF(MENU); item_index++) {
-        if (MENU[item_index].mode == mode) {
-            __ui_scr_menu_cursor_init(item_index);
-            return;
-        }
-    }
-
-    __ui_scr_menu_cursor_init(0u);
+    __ui_scr_menu_cursor_init(s_menu_last_picked);
 }
 
 static void __ui_scr_menu_draw(const UiDisplay_t *display) {
@@ -179,6 +171,7 @@ static void __ui_scr_menu_draw(const UiDisplay_t *display) {
 
 static void __scr_menu_pick() {
     uint32_t item_index = s_menu_item_first + s_menu_cursor_pos;
+    s_menu_last_picked = item_index;
     UiMode_t mode = MENU[item_index].mode;
     ui_mode_dispr_set(mode);
 }
