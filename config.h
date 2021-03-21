@@ -10,6 +10,7 @@
 #define DISPLAY_WIDTH                       0x80u
 #define DISPLAY_HEIGHT                      0x40u
 #define DISPLAY_SPACE_WIDTH                 0x08u
+#define TEXT_SPACE_WIDTH                    0x08u
 
 /**
  * DISPLAY_BUFFER_SIZE must be a product of

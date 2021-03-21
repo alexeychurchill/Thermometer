@@ -9,6 +9,7 @@ typedef enum UiMode {
     UI_MODE_TIME,
     UI_MODE_SETTINGS,
     UI_MODE_INFO,
+    UI_MODE_SET_TIME,
 
     UI_MODE_COUNT,
 } UiMode_t;

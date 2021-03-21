@@ -71,4 +71,19 @@ FORCE_INLINE uint32_t utf8_get_char_code(
     }
 }
 
+FORCE_INLINE uint32_t utf8_get_char_byte_index(
+        const uint8_t *data,
+        const uint32_t char_index
+) {
+    uint32_t byte_index = 0u;
+    uint32_t char_byte_size = 0u;
+
+    for (uint32_t index = 0u; index < char_index; index++) {
+        (void) utf8_get_char_code(data, index, &char_byte_size);
+        byte_index += char_byte_size;
+    }
+
+    return byte_index;
+}
+
 #endif //THERMOMETER_UTF8_H

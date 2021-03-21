@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18.2)
+cmake_minimum_required(VERSION 3.17.5)
 
 project(Thermometer C ASM)
 
@@ -32,7 +32,7 @@ add_custom_command(
 
         BYPRODUCTS ${FONT_GEN_PATH}
 
-        COMMAND python3 ${FONT_GEN_UTIL}
+        COMMAND python3 ${FONTS_GEN_UTIL}
             ${PROJECT_SOURCE_DIR}/fonts/AA-BebasNeue.ttf
             -hor
             -fl 1
@@ -42,7 +42,7 @@ add_custom_command(
             --glyph_height 16
             --chars А-Я а-я І і Ї ї Ґ ґ Є є 0-9 . , + ! :
 
-        COMMAND python3 ${FONT_GEN_UTIL}
+        COMMAND python3 ${FONTS_GEN_UTIL}
             ${PROJECT_SOURCE_DIR}/fonts/AA-BebasNeue.ttf
             -hor
             -fl 1
@@ -90,6 +90,7 @@ set(
         buttons.c
         rtc.c
         time_format.c
+        text.c
         ui/ui_mode_dispatcher.c
         ui/scr_common.c
         ui/scr_init.c
@@ -97,6 +98,7 @@ set(
         ui/ui_screen_temp.c
         ui/scr_menu.c
         ui/scr_time.c
+        ui/scr_set_time.c
 )
 
 list(APPEND SOURCES ${FONT_GEN_SOURCES})

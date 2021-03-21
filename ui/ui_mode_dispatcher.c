@@ -7,6 +7,7 @@
 #include "ui_screen_temp.h"
 #include "scr_menu.h"
 #include "scr_time.h"
+#include "scr_set_time.h"
 #include "scr_construction.h"
 
 static UiMode_t s_mode = UI_MODE_NONE;
@@ -19,6 +20,7 @@ static const UiScreen_t* const MODES_SCREENS[UI_MODE_COUNT] = {
         [UI_MODE_TIME] = &SCR_TIME,
         [UI_MODE_SETTINGS] = &SCR_CONSTRUCTION,
         [UI_MODE_INFO] = &SCR_CONSTRUCTION,
+        [UI_MODE_SET_TIME] = &SCR_SET_TIME
 };
 
 void ui_mode_dispr_init(const UiDisplay_t *display) {
