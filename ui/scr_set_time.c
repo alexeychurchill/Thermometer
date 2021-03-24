@@ -63,7 +63,7 @@ static void __scr_set_time_draw(const UiDisplay_t *display) {
     uint32_t digit_index = __set_time_current_digit + delimiter_count;
 
     uint32_t time_width = text_width(__time_str_buf, ssd1306_bebas_24_get_glyph, TEXT_CHAR_COUNT_ALL);
-    uint32_t display_offset = display_text_get_hor_offset(time_width, TEXT_ALIGN_CENTER, 0u);
+    uint32_t display_offset = text_offset(time_width, TEXT_ALIGN_CENTER, 0u);
 
     uint32_t current_char = utf8_get_char_code(__time_str_buf, digit_index, NULL);
     const uint8_t *glyph = ssd1306_bebas_24_get_glyph(current_char);

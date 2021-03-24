@@ -1,5 +1,6 @@
 #include "text.h"
 #include "utf8.h"
+#include "utils.h"
 #include "config.h"
 
 #ifndef TEXT_SPACE_WIDTH
@@ -29,4 +30,34 @@ uint32_t text_width(const uint8_t *str, GlyphLookupFunc_t glyph_lu_func, uint32_
     }
 
     return width;
+}
+
+uint32_t text_offset(uint32_t text_width, TextAlign_t align, uint32_t displace) {
+    if (text_width >= DISPLAY_WIDTH || displace >= DISPLAY_WIDTH) {
+        return 0u;
+    }
+
+    switch (align) {
+        case TEXT_ALIGN_CENTER: {
+            uint8_t max_width = DISPLAY_WIDTH - displace;
+            if (max_width <= text_width) {
+                return 0u;
+            }
+
+            return clamp_uint32_t((max_width - text_width) / 2u + displace, 0u, DISPLAY_WIDTH - 1u);
+        }
+
+        case TEXT_ALIGN_RIGHT: {
+            uint8_t max_width = DISPLAY_WIDTH - displace;
+            if (max_width <= text_width) {
+                return 0u;
+            }
+
+            return clamp_uint32_t(max_width - text_width + displace, 0u, DISPLAY_WIDTH - 1u);
+        }
+
+        default: {
+            return displace;
+        }
+    }
 }

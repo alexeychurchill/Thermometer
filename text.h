@@ -37,4 +37,13 @@ typedef enum TextAlign {
  */
 uint32_t text_width(const uint8_t *str, GlyphLookupFunc_t glyph_lu_func, uint32_t char_count);
 
+/**
+ * Calculates offset from the edge of the screen for text.<br>
+ * @param text_width text width
+ * @param align text edge aligning option
+ * @param displace text displacement from the <b><i>picked align option</i></b>
+ * @return offset of the text, from left edge
+ */
+uint32_t text_offset(uint32_t text_width, TextAlign_t align, uint32_t displace);
+
 #endif //THERMOMETER_TEXT_H
