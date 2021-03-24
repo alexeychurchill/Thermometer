@@ -2,31 +2,12 @@
 #include "scr_common.h"
 #include "../text_res.h"
 #include "bebas_24.h"
-#include "../utils.h"
 #include "../utf8.h"
-#include "../time_format.h"
-#include "../text.h"
+#include "../time.h"
 #include "../display.h"
-#include "../uart.h"
 #include "../rtc.h"
 
 static const uint32_t __SET_TIME_DIGIT_COUNT = 6u;
-
-static const uint32_t __SET_TIME_SEC_PER_DIGIT[] = {
-        10u * TIME_MIN_PER_HR * TIME_SEC_PER_MIN,
-        TIME_MIN_PER_HR * TIME_SEC_PER_MIN,
-        10u * TIME_SEC_PER_MIN,
-        TIME_SEC_PER_MIN,
-        10u,
-        1u
-};
-
-static const __SET_TIME_HRS_OVER20_LDIGIT = 2u;
-static const __SET_TIME_HRS_OVER20_RDIGIT_MAX = 3u;
-
-static const uint32_t __SET_TIME_DIGIT_MAX_VALUE[] = {
-        2u, 9u, 5u, 9u, 5u, 9u
-};
 
 static uint32_t __set_time_current_digit = 0u;
 
@@ -42,79 +23,20 @@ const UiScreen_t SCR_SET_TIME = {
         .handle_button = __scr_set_time_handle_button
 };
 
-static uint32_t __set_time_get_sel_digit(uint32_t digit) {
+static void __scr_set_time_dec() {
     uint32_t now = rtc_get_time();
 
-    if (digit == 0u) {
-        return now / __SET_TIME_SEC_PER_DIGIT[digit];
-    } else {
-        uint32_t hi_rem = now % __SET_TIME_SEC_PER_DIGIT[digit - 1u];
-        return hi_rem / __SET_TIME_SEC_PER_DIGIT[digit];
-    }
-}
-
-static void __set_time_set_sel_digit(uint32_t digit, uint32_t digit_value) {
-    uint32_t now = rtc_get_time();
-
-    if (digit == 0u) {
-        uint32_t lo_rem = now % __SET_TIME_SEC_PER_DIGIT[digit];
-        now = digit_value * __SET_TIME_SEC_PER_DIGIT[digit] + lo_rem;
-    } else {
-        uint32_t hi_div = __SET_TIME_SEC_PER_DIGIT[digit - 1u];
-        uint32_t hi = now / hi_div;
-        uint32_t hi_rem = now % hi_div;
-
-        uint32_t lo_div = __SET_TIME_SEC_PER_DIGIT[digit];
-        uint32_t lo_rem = hi_rem % lo_div;
-
-        now = hi * hi_div + digit_value * lo_div + lo_rem;
-    }
+    now = time_digit_dec(now, __set_time_current_digit);
 
     rtc_set_time(now);
 }
 
-static FORCE_INLINE uint32_t __set_time_get_digit_max(uint32_t digit_index) {
-    uint32_t digit_max = __SET_TIME_DIGIT_MAX_VALUE[digit_index];
-    if (digit_index != 1u) {
-        return digit_max;
-    }
+static void __sct_set_time_inc() {
+    uint32_t now = rtc_get_time();
 
-    uint32_t hr_l_digit = __set_time_get_sel_digit(0u);
-    if (hr_l_digit == __SET_TIME_HRS_OVER20_LDIGIT) {
-        digit_max = __SET_TIME_HRS_OVER20_RDIGIT_MAX;
-    }
+    now = time_digit_inc(now, __set_time_current_digit);
 
-    return digit_max;
-}
-
-static void __scr_set_time_dec_delta() {
-    uint32_t digit = __set_time_get_sel_digit(__set_time_current_digit);
-
-    uint32_t digit_max = __set_time_get_digit_max(__set_time_current_digit);
-
-    if (digit == 0u) {
-        digit = digit_max;
-    } else {
-        digit--;
-    }
-
-    __set_time_set_sel_digit(__set_time_current_digit, digit);
-}
-
-static void __sct_set_time_inc_delta() {
-    uint32_t digit = __set_time_get_sel_digit(__set_time_current_digit);
-
-    uint32_t digit_max = __set_time_get_digit_max(__set_time_current_digit);
-
-    if (__set_time_current_digit == 0u && digit >= 1u) {
-        uint32_t hr_r_digit = __set_time_get_sel_digit(1u);
-        if (hr_r_digit > 3u) {
-            __set_time_set_sel_digit(1u, 3u);
-        }
-    }
-
-    digit = (digit + 1u) % (digit_max + 1u);
-    __set_time_set_sel_digit(__set_time_current_digit, digit);
+    rtc_set_time(now);
 }
 
 static void __scr_set_time_start() {
@@ -161,8 +83,8 @@ static void __scr_set_time_handle_button(const HmiBtnEvent_t event) {
     if (event.btn == HMI_BTN_ENTER && event.type == HMI_BTN_EVENT_PRESS) {
         __set_time_current_digit = (__set_time_current_digit + 1u) % __SET_TIME_DIGIT_COUNT;
     } else if (event.btn == HMI_BTN_LEFT && event.type == HMI_BTN_EVENT_PRESS) {
-        __scr_set_time_dec_delta();
+        __scr_set_time_dec();
     } else if (event.btn == HMI_BTN_RIGHT && event.type == HMI_BTN_EVENT_PRESS) {
-        __sct_set_time_inc_delta();
+        __sct_set_time_inc();
     }
 }

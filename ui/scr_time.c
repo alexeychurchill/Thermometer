@@ -5,7 +5,7 @@
 #include "bebas_24.h"
 #include "../text_res.h"
 #include "../rtc.h"
-#include "../time_format.h"
+#include "../time.h"
 
 #define SCR_TIME_PAGE 3u
 

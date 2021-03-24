@@ -61,10 +61,10 @@ static uint32_t display_text_get_hor_offset(uint32_t text_width, TextAlign_t ali
     }
 }
 
-static uint32_t display_text_width(const uint8_t text[], uint32_t max_length, const uint8_t* (*lookup_func)(uint32_t)) {
+static uint32_t display_text_width(const uint8_t text[],const uint8_t* (*lookup_func)(uint32_t)) {
     uint32_t width = 0;
     uint32_t char_index = 0;
-    while (text[char_index] != '\0' && char_index < max_length) {
+    while (text[char_index] != '\0' && char_index < DISPLAY_STRING_MAX_LEN) {
         if (text[char_index] == SPACE_CHAR) {
             char_index++;
             width += DISPLAY_SPACE_WIDTH;
@@ -162,7 +162,7 @@ void display_buffer_put_text(const uint8_t text[]) {
         return;
     }
 
-    uint32_t text_w = display_text_width(text, DISPLAY_STRING_MAX_LEN, text_glyph_lookup);
+    uint32_t text_w = display_text_width(text, text_glyph_lookup);
     uint8_t hor_offset = display_text_get_hor_offset(text_w, text_align, text_offset_x);
 
     uint32_t char_index = 0;

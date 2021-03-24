@@ -89,7 +89,7 @@ set(
         uart.c
         buttons.c
         rtc.c
-        time_format.c
+        time.c
         text.c
         ui/ui_mode_dispatcher.c
         ui/scr_common.c
