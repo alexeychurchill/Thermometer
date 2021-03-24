@@ -33,7 +33,7 @@ add_custom_command(
         BYPRODUCTS ${FONT_GEN_PATH}
 
         COMMAND python3 ${FONTS_GEN_UTIL}
-            ${PROJECT_SOURCE_DIR}/fonts/AA-BebasNeue.ttf
+        ${PROJECT_SOURCE_DIR}/res/fonts/AA-BebasNeue.ttf
             -hor
             -fl 1
             -fr 1
@@ -43,7 +43,7 @@ add_custom_command(
             --chars А-Я а-я І і Ї ї Ґ ґ Є є 0-9 . , + ! :
 
         COMMAND python3 ${FONTS_GEN_UTIL}
-            ${PROJECT_SOURCE_DIR}/fonts/AA-BebasNeue.ttf
+        ${PROJECT_SOURCE_DIR}/res/fonts/AA-BebasNeue.ttf
             -hor
             -fl 1
             -fr 1
