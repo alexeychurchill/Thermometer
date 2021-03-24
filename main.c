@@ -1,3 +1,5 @@
+#include <stdbool.h>
+#include "CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h"
 #include "stm32f1xx.h"
 #include "config.h"
 #include "rcc_setup.h"
@@ -7,8 +9,13 @@
 #include "onewire_stm32.h"
 #include "poll_timer.h"
 #include "temp_sensor_dispatcher.h"
-#include "./ui/ui_screen_temp.h"
+#include "ui/ui_screen_temp.h"
 #include "display.h"
+#include "buttons.h"
+#include "rtc.h"
+#include "ui/scr_init.h"
+#include "ui/ui_mode.h"
+#include "ui/ui_mode_dispatcher.h"
 
 
 static const UiDisplay_t display = {
@@ -19,6 +26,7 @@ static const UiDisplay_t display = {
         .text_set_align = display_text_set_align,
         .text_set_font = display_text_set_font,
         .put_text = display_buffer_put_text,
+        .invert = display_buffer_invert,
 };
 
 static const UiScreen_t screen_temp = {
@@ -43,6 +51,9 @@ int main() {
     gpio_setup(GPIOC, 13, GPIO_OUT_PP, GPIO_MODE_OUT_50MHZ); // DevBoard LED
 
     uart1_init();
+
+    hmi_btn_init();
+
     gpio_setup(GPIOA, 0, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ); // 1-Wire Timer CH1/2 GPIO
     ow_start_bus();
     poll_timer_init(POLL_TIMER);
@@ -58,9 +69,24 @@ int main() {
     display_buffer_clear();
     display_flush();
 
+    // Just to show that device is working,
+    // buuut smb is a little bit slow ;)
+    // No needed to call event handling for this screen
+    SCR_INIT.start();
+    SCR_INIT.draw(&display);
+
+    display_flush();
+
+    rtc_init();
+
+    ui_mode_dispr_init(&display);
+    ui_mode_dispr_set(UI_MODE_SET_TIME);
+
     while (true) {
         tsd_dispatch_state();
-        screen_temp.draw(&display);
+
+        ui_mode_dispr_dispatch();
+
         display_flush();
     }
 
