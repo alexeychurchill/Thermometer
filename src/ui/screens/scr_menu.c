@@ -1,15 +1,15 @@
 #include "scr_menu.h"
 
 #include <stdbool.h>
-#include "../utils.h"
-#include "../ssd1306.h"
-#include "../display.h"
+#include "utils.h"
+#include "ssd1306.h"
+#include "display.h"
 #include "ui_mode_dispatcher.h"
 #include "scr_common.h"
 #include "scr_construction.h"
 #include "ui_screen_temp.h"
 
-#include "../text_res.h"
+#include "text_res.h"
 
 #include "bebas_16.h"
 

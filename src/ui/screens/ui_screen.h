@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../text.h"
-#include "../buttons.h"
+#include "text.h"
+#include "buttons.h"
 
 
 typedef struct UiDisplay {

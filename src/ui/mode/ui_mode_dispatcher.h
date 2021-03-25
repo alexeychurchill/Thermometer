@@ -2,7 +2,7 @@
 #define THERMOMETER_UI_MODE_DISPATCHER_H
 
 #include "ui_screen.h"
-#include "ui_mode.h"
+#include "mode/ui_mode.h"
 
 void ui_mode_dispr_init(const UiDisplay_t *display);
 

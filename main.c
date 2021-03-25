@@ -9,13 +9,13 @@
 #include "onewire_stm32.h"
 #include "poll_timer.h"
 #include "temp_sensor_dispatcher.h"
-#include "ui/ui_screen_temp.h"
+#include "screens/ui_screen_temp.h"
 #include "display.h"
 #include "buttons.h"
 #include "rtc.h"
-#include "ui/scr_init.h"
-#include "ui/ui_mode.h"
-#include "ui/ui_mode_dispatcher.h"
+#include "screens/scr_init.h"
+#include "mode/ui_mode.h"
+#include "mode/ui_mode_dispatcher.h"
 
 
 static const UiDisplay_t display = {

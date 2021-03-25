@@ -1,11 +1,11 @@
 #include "ui_screen_temp.h"
-#include "../config.h"
+#include "config.h"
 #include "bebas_16.h"
 #include "fonts/arial_black_24.h"
-#include "../text_res.h"
+#include "text_res.h"
 #include <stddef.h>
-#include "../temp_sensor_dispatcher.h"
-#include "../buttons.h"
+#include "temp_sensor_dispatcher.h"
+#include "buttons.h"
 #include "ui_screen.h"
 #include "ui_mode_dispatcher.h"
 

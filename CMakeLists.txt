@@ -68,8 +68,10 @@ set(FLASH_ADDRESS 0x08000000)
 set(LD_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/ST/STM32F1xx/Source/gcc/linker/STM32F103XB_FLASH.ld)
 set(CMAKE_EXE_LINKER_FLAGS "-T\"${LD_SCRIPT}\"")
 
-include_directories(ui)
-include_directories(ui/fonts)
+include_directories(src/ui)
+include_directories(src/ui/fonts)
+include_directories(src/ui/mode)
+include_directories(src/ui/screens)
 include_directories(.)
 include_directories(${PROJECT_BINARY_DIR}/${FONT_GEN_PATH})
 include_directories(CMSIS/Core/Include)
@@ -91,14 +93,14 @@ set(
         rtc.c
         time.c
         text.c
-        ui/ui_mode_dispatcher.c
-        ui/scr_common.c
-        ui/scr_init.c
-        ui/scr_construction.c
-        ui/ui_screen_temp.c
-        ui/scr_menu.c
-        ui/scr_time.c
-        ui/scr_set_time.c
+        src/ui/mode/ui_mode_dispatcher.c
+        src/ui/screens/scr_common.c
+        src/ui/screens/scr_init.c
+        src/ui/screens/scr_construction.c
+        src/ui/screens/ui_screen_temp.c
+        src/ui/screens/scr_menu.c
+        src/ui/screens/scr_time.c
+        src/ui/screens/scr_set_time.c
 )
 
 list(APPEND SOURCES ${FONT_GEN_SOURCES})

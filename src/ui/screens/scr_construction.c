@@ -1,9 +1,9 @@
 #include "scr_construction.h"
 #include "ui_screen.h"
-#include "../buttons.h"
+#include "buttons.h"
 #include "ui_mode_dispatcher.h"
 
-#include "../text_res.h"
+#include "text_res.h"
 
 #include "bebas_16.h"
 

@@ -1,6 +1,6 @@
 #include "scr_init.h"
 #include "bebas_16.h"
-#include "../text_res.h"
+#include "text_res.h"
 
 #define SCR_INIT_PAGE 3u
 

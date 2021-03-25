@@ -3,9 +3,9 @@
 #include "scr_common.h"
 #include "ui_mode_dispatcher.h"
 #include "bebas_24.h"
-#include "../text_res.h"
-#include "../rtc.h"
-#include "../time.h"
+#include "text_res.h"
+#include "rtc.h"
+#include "time.h"
 
 #define SCR_TIME_PAGE 3u
 

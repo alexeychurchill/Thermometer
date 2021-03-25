@@ -1,11 +1,11 @@
 #include "scr_set_time.h"
 #include "scr_common.h"
-#include "../text_res.h"
+#include "text_res.h"
 #include "bebas_24.h"
-#include "../utf8.h"
-#include "../time.h"
-#include "../display.h"
-#include "../rtc.h"
+#include "utf8.h"
+#include "time.h"
+#include "display.h"
+#include "rtc.h"
 
 static const uint32_t __SET_TIME_DIGIT_COUNT = 6u;
 

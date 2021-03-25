@@ -1,6 +1,6 @@
 #include "scr_common.h"
-#include "../ssd1306.h"
-#include "../display.h"
+#include "ssd1306.h"
+#include "display.h"
 #include "bebas_16.h"
 
 void scr_common_draw_title(const UiDisplay_t *display, const uint8_t *title_text) {
