@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include "CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h"
 #include "stm32f1xx.h"
 #include "config.h"
 #include "rcc_setup.h"

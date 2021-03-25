@@ -1,7 +1,7 @@
 #include "ds18b20.h"
 
 #include <stddef.h>
-#include "src/util/utils.h"
+#include "util/utils.h"
 
 #define DS18B20_TEMP_BIT_OFFSET         4u
 #define DS18B20_TEMP_MASK               (((uint16_t) 0x7Fu) << DS18B20_TEMP_BIT_OFFSET)

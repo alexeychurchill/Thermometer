@@ -74,7 +74,6 @@ include_directories(src/ui)
 include_directories(src/ui/fonts)
 include_directories(src/ui/mode)
 include_directories(src/ui/screens)
-include_directories(.)
 include_directories(${PROJECT_BINARY_DIR}/${FONT_GEN_PATH})
 include_directories(CMSIS/Core/Include)
 include_directories(CMSIS/Device/ST/STM32F1xx/Include)
@@ -83,17 +82,17 @@ set(
         SOURCES
         CMSIS/Device/ST/STM32F1xx/Source/gcc/startup_stm32f103xb.s
         CMSIS/Device/ST/STM32F1xx/Source/system_stm32f1xx.c
-        display.c
+        src/main.c
+        src/poll_timer.c
+        src/temp_sensor_dispatcher.c
+        src/rtc.c
+        src/time.c
+        src/display.c
         src/drivers/ds18b20.c
         src/interfaces/i2c.c
-        main.c
         src/interfaces/onewire_stm32.c
-        poll_timer.c
-        temp_sensor_dispatcher.c
         src/interfaces/uart.c
         src/interfaces/buttons.c
-        rtc.c
-        time.c
         src/ui/text.c
         src/ui/mode/ui_mode_dispatcher.c
         src/ui/screens/scr_common.c

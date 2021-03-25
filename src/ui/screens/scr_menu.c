@@ -1,13 +1,9 @@
 #include "scr_menu.h"
-
-#include <stdbool.h>
-#include "src/util/utils.h"
+#include "util/utils.h"
 #include "drivers/ssd1306.h"
 #include "display.h"
 #include "ui_mode_dispatcher.h"
 #include "scr_common.h"
-#include "scr_construction.h"
-#include "ui_screen_temp.h"
 
 #include "text_res.h"
 

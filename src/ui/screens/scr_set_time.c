@@ -2,9 +2,8 @@
 #include "scr_common.h"
 #include "text_res.h"
 #include "bebas_24.h"
-#include "src/util/utf8.h"
+#include "util/utf8.h"
 #include "time.h"
-#include "display.h"
 #include "rtc.h"
 
 static const uint32_t __SET_TIME_DIGIT_COUNT = 6u;

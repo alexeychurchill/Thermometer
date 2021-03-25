@@ -1,6 +1,6 @@
 #include "text.h"
-#include "src/util/utf8.h"
-#include "src/util/utils.h"
+#include "util/utf8.h"
+#include "util/utils.h"
 #include "config.h"
 
 #ifndef TEXT_SPACE_WIDTH

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "stm32f1xx.h"
-#include "src/util/utils.h"
+#include "util/utils.h"
 
 typedef enum I2CMode {
     I2C_MODE_TX = 0x0u,

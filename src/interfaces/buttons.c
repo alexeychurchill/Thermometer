@@ -1,7 +1,6 @@
 #include "buttons.h"
 #include "gpio.h"
-#include "src/util/utils.h"
-#include "uart.h"
+#include "util/utils.h"
 
 // 72MHz / 36000 = 2kHz ==> 1 Tick - 500us
 #define HMI_BTN_TIM_PSC                                 35999u

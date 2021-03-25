@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "interfaces/onewire.h"
-#include "src/util/utils.h"
+#include "util/utils.h"
 
 typedef enum DS18B20Cmd {
     DS18B20_CMD_CONVERT_T           = 0x44,

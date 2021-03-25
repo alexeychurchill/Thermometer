@@ -1,5 +1,5 @@
 #include "time.h"
-#include "src/util/utils.h"
+#include "util/utils.h"
 
 #define TIME_SEC_IN_DAY 86400u // 1 day * 24 hrs * 60 min * 60 sec
 #define TIME_SEC_IN_MIN 60u // 60 sec
