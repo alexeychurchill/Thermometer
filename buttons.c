@@ -1,6 +1,6 @@
 #include "buttons.h"
 #include "gpio.h"
-#include "utils.h"
+#include "src/util/utils.h"
 #include "uart.h"
 
 // 72MHz / 36000 = 2kHz ==> 1 Tick - 500us

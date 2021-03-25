@@ -3,8 +3,8 @@
 #include "config.h"
 #include "stm32f1xx.h"
 #include "i2c.h"
-#include "utf8.h"
-#include "utils.h"
+#include "src/util/utf8.h"
+#include "src/util/utils.h"
 
 #define SPACE_CHAR                      (' ')
 

@@ -1,6 +1,6 @@
 #include "rtc.h"
 #include "stm32f1xx.h"
-#include "utils.h"
+#include "src/util/utils.h"
 
 #define RTC_PRLH_SEC                                0x0u
 #define RTC_PRLL_SEC                                0x7FFFu

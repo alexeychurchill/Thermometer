@@ -2,7 +2,7 @@
 #include "scr_common.h"
 #include "text_res.h"
 #include "bebas_24.h"
-#include "utf8.h"
+#include "src/util/utf8.h"
 #include "time.h"
 #include "display.h"
 #include "rtc.h"

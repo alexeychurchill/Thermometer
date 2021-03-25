@@ -68,6 +68,8 @@ set(FLASH_ADDRESS 0x08000000)
 set(LD_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/ST/STM32F1xx/Source/gcc/linker/STM32F103XB_FLASH.ld)
 set(CMAKE_EXE_LINKER_FLAGS "-T\"${LD_SCRIPT}\"")
 
+include_directories(src)
+include_directories(src/util)
 include_directories(src/ui)
 include_directories(src/ui/fonts)
 include_directories(src/ui/mode)

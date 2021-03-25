@@ -1,7 +1,7 @@
 #include "scr_menu.h"
 
 #include <stdbool.h>
-#include "utils.h"
+#include "src/util/utils.h"
 #include "ssd1306.h"
 #include "display.h"
 #include "ui_mode_dispatcher.h"

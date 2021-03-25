@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "stm32f1xx.h"
-#include "utils.h"
+#include "src/util/utils.h"
 
 /**
  * GPIO IO Modes
