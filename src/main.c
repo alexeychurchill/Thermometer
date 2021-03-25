@@ -79,7 +79,7 @@ int main() {
     rtc_init();
 
     ui_mode_dispr_init(&display);
-    ui_mode_dispr_set(UI_MODE_SET_TIME);
+    ui_mode_dispr_set(UI_MODE_MENU);
 
     while (true) {
         tsd_dispatch_state();
