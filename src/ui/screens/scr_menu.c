@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 #include "src/util/utils.h"
-#include "ssd1306.h"
+#include "drivers/ssd1306.h"
 #include "display.h"
 #include "ui_mode_dispatcher.h"
 #include "scr_common.h"

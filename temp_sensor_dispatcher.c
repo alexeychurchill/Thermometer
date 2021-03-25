@@ -1,6 +1,6 @@
 #include "temp_sensor_dispatcher.h"
 #include "config.h"
-#include "ds18b20.h"
+#include "drivers/ds18b20.h"
 #include "poll_timer.h"
 
 

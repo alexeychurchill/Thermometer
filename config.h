@@ -2,7 +2,7 @@
 #define THERMOMETER_CONFIG_H
 
 #include "stm32f1xx.h"
-#include "ssd1306.h"
+#include "drivers/ssd1306.h"
 
 // Display
 #define DISPLAY_I2C                         (I2C2)

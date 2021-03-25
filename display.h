@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "config.h"
-#include "ssd1306.h"
+#include "drivers/ssd1306.h"
 #include "text.h"
 
 
