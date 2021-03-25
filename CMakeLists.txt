@@ -92,7 +92,7 @@ set(
         buttons.c
         rtc.c
         time.c
-        text.c
+        src/ui/text.c
         src/ui/mode/ui_mode_dispatcher.c
         src/ui/screens/scr_common.c
         src/ui/screens/scr_init.c
