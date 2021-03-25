@@ -2,7 +2,7 @@
 #define THERMOMETER_TEMP_SENSOR_DISPATCHER_H
 
 #include <stdint.h>
-#include "onewire.h"
+#include "interfaces/onewire.h"
 
 void tsd_init(const OwBusLine_t *line);
 

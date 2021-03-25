@@ -2,7 +2,7 @@
 
 #include "config.h"
 #include "stm32f1xx.h"
-#include "i2c.h"
+#include "interfaces/i2c.h"
 #include "src/util/utf8.h"
 #include "src/util/utils.h"
 

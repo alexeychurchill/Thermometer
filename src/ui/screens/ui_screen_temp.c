@@ -5,7 +5,7 @@
 #include "text_res.h"
 #include <stddef.h>
 #include "temp_sensor_dispatcher.h"
-#include "buttons.h"
+#include "interfaces/buttons.h"
 #include "ui_screen.h"
 #include "ui_mode_dispatcher.h"
 

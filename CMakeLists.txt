@@ -85,13 +85,13 @@ set(
         CMSIS/Device/ST/STM32F1xx/Source/system_stm32f1xx.c
         display.c
         src/drivers/ds18b20.c
-        i2c.c
+        src/interfaces/i2c.c
         main.c
-        onewire_stm32.c
+        src/interfaces/onewire_stm32.c
         poll_timer.c
         temp_sensor_dispatcher.c
-        uart.c
-        buttons.c
+        src/interfaces/uart.c
+        src/interfaces/buttons.c
         rtc.c
         time.c
         src/ui/text.c

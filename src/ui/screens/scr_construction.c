@@ -1,6 +1,6 @@
 #include "scr_construction.h"
 #include "ui_screen.h"
-#include "buttons.h"
+#include "interfaces/buttons.h"
 #include "ui_mode_dispatcher.h"
 
 #include "text_res.h"

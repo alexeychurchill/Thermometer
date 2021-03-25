@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "text.h"
-#include "buttons.h"
+#include "interfaces/buttons.h"
 
 
 typedef struct UiDisplay {

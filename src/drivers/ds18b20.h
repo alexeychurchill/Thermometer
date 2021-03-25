@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "onewire.h"
+#include "interfaces/onewire.h"
 #include "src/util/utils.h"
 
 typedef enum DS18B20Cmd {
