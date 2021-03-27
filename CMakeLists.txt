@@ -72,6 +72,7 @@ include_directories(src)
 include_directories(src/util)
 include_directories(src/ui)
 include_directories(src/ui/fonts)
+include_directories(src/ui/menu)
 include_directories(src/ui/mode)
 include_directories(src/ui/screens)
 include_directories(${PROJECT_BINARY_DIR}/${FONT_GEN_PATH})
@@ -94,6 +95,7 @@ set(
         src/interfaces/uart.c
         src/interfaces/buttons.c
         src/ui/text.c
+        src/ui/menu/menu.c
         src/ui/mode/ui_mode_dispatcher.c
         src/ui/screens/scr_common.c
         src/ui/screens/scr_init.c
