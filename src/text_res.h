@@ -7,6 +7,8 @@
 
 static const uint8_t RES_STR_SCR_TEMP_TITLE[] = "Температура";
 
+RES_TEXT(GENERIC_BACK, "..")
+
 RES_TEXT(SCR_INIT_CAPTION, "Привіт")
 
 RES_TEXT(SCR_MENU_TITLE, "МЕНЮ")
@@ -17,6 +19,9 @@ RES_TEXT(SCR_MENU_ABOUT, "Інформація")
 RES_TEXT(SCR_MENU_MISC, "Інше")
 
 RES_TEXT(SCR_TIME_TITLE, "ЧАС")
+
+RES_TEXT(SCR_SETTINGS_TITLE, "НАЛАШТУВАННЯ")
+RES_TEXT(SCR_SETTINGS_ITEM_TIME, "Годинник")
 
 RES_TEXT(SCR_SET_TIME_TITLE, "НАЛАШТ. ЧАСУ")
 

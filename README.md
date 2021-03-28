@@ -32,7 +32,8 @@ For example, it's possible to use CLion. To use CLion, do the following:
 
 ### TODO
 Just some short notes on things I'm going to do:
-* [ ] _GUI:_ Add SETTINGS screen
+* [ ] **_Refactoring:_ Stop using `__` for file-privates!** Remove all existing usages
+* [x] ~~_GUI:_ Add SETTINGS screen~~
 * [ ] _GUI:_ Add LOGGER configuration screen
 * [ ] _Logging:_ Implement sleeping mode and wake up by alarm
 * [ ] _Logging:_ Implement driver for the W25Q*

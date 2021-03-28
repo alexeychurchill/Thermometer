@@ -6,9 +6,9 @@
 
 void ui_mode_dispr_init(const UiDisplay_t *display);
 
-void ui_mode_dispr_set(const UiMode_t mode);
+void ui_mode_dispr_set(UiMode_t mode);
 
-const UiMode_t ui_mode_dispr_get();
+UiMode_t ui_mode_dispr_get();
 
 void ui_mode_dispr_dispatch();
 

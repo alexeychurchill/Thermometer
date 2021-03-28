@@ -5,6 +5,7 @@
 #include "util/utf8.h"
 #include "time.h"
 #include "rtc.h"
+#include "../mode/ui_mode_dispatcher.h"
 
 static const uint32_t __SET_TIME_DIGIT_COUNT = 6u;
 
@@ -79,7 +80,9 @@ static void __scr_set_time_draw(const UiDisplay_t *display) {
 }
 
 static void __scr_set_time_handle_button(const HmiBtnEvent_t event) {
-    if (event.btn == HMI_BTN_ENTER && event.type == HMI_BTN_EVENT_PRESS) {
+    if (event.btn == HMI_BTN_ENTER && event.type == HMI_BTN_EVENT_LONG_PRESS) {
+        ui_mode_dispr_set(UI_MODE_SETTINGS);
+    } else if (event.btn == HMI_BTN_ENTER && event.type == HMI_BTN_EVENT_PRESS) {
         __set_time_current_digit = (__set_time_current_digit + 1u) % __SET_TIME_DIGIT_COUNT;
     } else if (event.btn == HMI_BTN_LEFT && event.type == HMI_BTN_EVENT_PRESS) {
         __scr_set_time_dec();

@@ -1,0 +1,7 @@
+#ifndef THERMOMETER_SCR_SETTINGS_H
+#define THERMOMETER_SCR_SETTINGS_H
+#include "ui_screen.h"
+
+const UiScreen_t SCR_SETTINGS;
+
+#endif //THERMOMETER_SCR_SETTINGS_H
