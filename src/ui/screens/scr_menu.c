@@ -6,11 +6,8 @@
 #include "text_res.h"
 #include "bebas_16.h"
 
-static const uint32_t SCR_MENU_LEFT_MARGIN_PX           = 0x10u;
-static const uint32_t SCR_MENU_TOP_MARGIN_PAGES         = 0x02u;
-static const uint32_t SCR_MENU_ITEM_HEIGHT_PX           = 0x02u;
-static const uint32_t SCR_MENU_LAST_PICKED_DEFAULT      = 0x0u;
-static const uint32_t SCR_MENU_ITEM_COUNT               = 0x4u;
+#define SCR_MENU_LAST_PICKED_DEFAULT                0x0u
+#define SCR_MENU_ITEM_COUNT                         0x4u
 
 static void start();
 static void draw(const UiDisplay_t *display);
@@ -39,12 +36,12 @@ static const UiMode_t MENU_MODES[] = {
 static Menu_t menu = {
         .first_item_index = 0u,
         .cursor_position = 0u,
-        .item_count = SCR_MENU_ITEM_COUNT, // TODO: Move to a constant
+        .item_count = SCR_MENU_ITEM_COUNT,
         .last_picked_item_index = SCR_MENU_LAST_PICKED_DEFAULT,
         .titles = (const uint8_t**) MENU_TITLES,
-        .top_margin_pages = SCR_MENU_TOP_MARGIN_PAGES,
-        .left_margin_px = SCR_MENU_LEFT_MARGIN_PX,
-        .item_height_pages = SCR_MENU_ITEM_HEIGHT_PX,
+        .top_margin_pages = MENU_DEFAULT_TOP_MARGIN_PAGES,
+        .left_margin_px = MENU_DEFAULT_LEFT_MARGIN_PX,
+        .item_height_pages = MENU_DEFAULT_ITEM_HEIGHT_PAGES,
 };
 
 static void start() {

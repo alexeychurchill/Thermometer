@@ -79,6 +79,7 @@ uint32_t menu_pick_item(Menu_t *menu) {
 }
 
 void menu_render(const Menu_t *menu, const UiDisplay_t *display) {
+    display->text_set_align(TEXT_ALIGN_LEFT);
     display->text_set_offset_x(menu->left_margin_px);
 
     uint32_t visible_count = get_visible_count(menu);

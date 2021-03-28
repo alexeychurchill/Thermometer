@@ -104,7 +104,7 @@ set(
         src/ui/screens/scr_menu.c
         src/ui/screens/scr_time.c
         src/ui/screens/scr_set_time.c
-)
+        src/ui/screens/scr_settings.c src/ui/screens/scr_settings.h)
 
 list(APPEND SOURCES ${FONT_GEN_SOURCES})
 
