@@ -6,9 +6,19 @@
 #include "drivers/ssd1306.h"
 #include "text.h"
 
+/**
+ * Display control functions
+ */
 
 void display_init();
+void display_off();
+
+/**
+ * Drawing functions
+ */
+
 uint8_t* display_get_buffer();
+
 void display_buffer_clear();
 void display_buffer_put_pixel(uint8_t x, uint8_t y);
 void display_text_set_page(uint8_t page);

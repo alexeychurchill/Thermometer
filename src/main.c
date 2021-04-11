@@ -6,6 +6,7 @@
 #include "gpio.h"
 #include "interfaces/onewire.h"
 #include "interfaces/onewire_stm32.h"
+#include "interfaces/i2c.h"
 #include "poll_timer.h"
 #include "temp_sensor_dispatcher.h"
 #include "screens/ui_screen_temp.h"
@@ -64,7 +65,12 @@ int main() {
     gpio_setup(GPIOB, 10, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ); // Display I2C
     gpio_setup(GPIOB, 11, GPIO_OUT_AF_OD, GPIO_MODE_OUT_50MHZ); // Display I2C
 
+    // Init Display I2C (I2C2)
+    i2c_setup_timing_sm(DISPLAY_I2C, SystemCoreClock / 2);
+    i2c_enable(DISPLAY_I2C);
+
     display_init();
+
     display_buffer_clear();
     display_flush();
 

@@ -96,10 +96,6 @@ static void send_display(const uint8_t* data, uint32_t length) {
 }
 
 void display_init() {
-    // Init I2C 2 for SSD1306-display
-    i2c_setup_timing_sm(DISPLAY_I2C, SystemCoreClock / 2);
-    i2c_enable(DISPLAY_I2C);
-
     // Init SSD1306
     ssd1306_set_display_off(send_display);
     ssd1306_set_multiplex_ratio(send_display, (DISPLAY_HEIGHT - 0x1));
@@ -116,6 +112,10 @@ void display_init() {
     ssd1306_set_oscillator_freq_and_divider(send_display, 0x8, 0x0);
     ssd1306_setup_charge_pump(send_display, SSD1306_CHARGE_PUMP_ENABLE);
     ssd1306_set_display_on(send_display);
+}
+
+void display_off() {
+    ssd1306_set_display_off(send_display);
 }
 
 uint8_t* display_get_buffer() {
