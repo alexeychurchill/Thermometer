@@ -51,11 +51,8 @@ const UiScreen_t SCR_SET_SLEEP = {
         .handle_button = handle_button,
 };
 
-#include "../../interfaces/uart.h"
-
 static void start() {
     uint32_t sleep_delay = settings_get_sleep();
-    uart1_send_str("--SLEEP: "); uart1_send_number(sleep_delay); uart1_send_strn("");
 
     for (uint32_t index = 0u; index < ITEM_COUNT - ITEM_OPTIONS_START; index++) {
         if (SLEEP_PERIOD_MS[index] == sleep_delay) {
@@ -73,7 +70,6 @@ static void draw(const UiDisplay_t *display) {
 static void pick_item(uint32_t picked_index) {
     uint32_t sleep_delay = SLEEP_PERIOD_MS[picked_index - ITEM_OPTIONS_START];
     settings_set_sleep(sleep_delay);
-    uart1_send_str("SET SLEEP: "); uart1_send_number(sleep_delay); uart1_send_strn("");
     ui_mode_dispr_set(UI_MODE_SETTINGS);
 }
 
