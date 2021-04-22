@@ -5,7 +5,7 @@
 #include "../menu/menu.h"
 #include "../../text_res.h"
 
-#define ITEM_COUNT                              2u
+#define ITEM_COUNT                              3u
 #define ITEM_FIRST_DEFAULT                      0u
 #define ITEM_GO_BACK_INDEX                      0u
 #define ITEM_GO_BACK_OFFSET                     1u
@@ -23,10 +23,12 @@ const UiScreen_t SCR_SETTINGS = {
 static const uint8_t *ITEM_TITLES[] = {
         RES_STR_GENERIC_BACK,
         RES_STR_SCR_SETTINGS_ITEM_TIME,
+        RES_STR_SCR_SETTINGS_ITEM_SLEEP,
 };
 
 static const UiMode_t ITEM_MODES[] = {
         UI_MODE_SET_TIME,
+        UI_MODE_SET_SLEEP,
 };
 
 static Menu_t SETTINGS_MENU = {
