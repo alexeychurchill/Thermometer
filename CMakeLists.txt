@@ -89,6 +89,8 @@ set(
         src/rtc.c
         src/time.c
         src/display.c
+        src/flash.c
+        src/flash_settings.c
         src/drivers/ds18b20.c
         src/interfaces/i2c.c
         src/interfaces/onewire_stm32.c

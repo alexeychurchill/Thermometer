@@ -4,6 +4,7 @@
 #include "rcc_setup.h"
 #include "interfaces/uart.h"
 #include "gpio.h"
+#include "flash_settings.h"
 #include "interfaces/onewire.h"
 #include "interfaces/onewire_stm32.h"
 #include "interfaces/i2c.h"
@@ -49,6 +50,8 @@ int main() {
     rcc_enable_peripherals_clocking();
 
     gpio_setup(GPIOC, 13, GPIO_OUT_PP, GPIO_MODE_OUT_50MHZ); // DevBoard LED
+
+    settings_init();
 
     uart1_init();
 
