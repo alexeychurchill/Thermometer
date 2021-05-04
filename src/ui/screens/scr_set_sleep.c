@@ -4,19 +4,20 @@
 #include "ui_mode_dispatcher.h"
 #include "../../text_res.h"
 #include "../../flash_settings.h"
+#include "../../power.h"
 
 #define ITEM_COUNT                                      8u
 #define ITEM_OPTIONS_START                              1u
 #define ITEM_FIRST_DEFAULT                              0u
 
 static const uint32_t SLEEP_PERIOD_MS[] = {
-              0u, // Off
-          60000u, // 1m * 60s * 1000ms
-         300000u, // 5m * 60s * 1000ms
-         900000u, // 15m * 60s * 1000ms
-        1800000u, // 30m * 60s * 1000ms
-        3600000u, // 1h * 60m * 60s * 1000ms
-        7200000u, // 2h * 60m * 60s * 1000ms
+                0u, // Off
+               60u, // 1m * 60s
+              300u, // 5m * 60s
+              900u, // 15m * 60s
+             1800u, // 30m * 60s
+             3600u, // 1h * 60m * 60s
+             7200u, // 2h * 60m * 60s
 };
 
 static const uint8_t * const SLEEP_PERIOD_TITLES[]  = {
@@ -70,6 +71,7 @@ static void draw(const UiDisplay_t *display) {
 static void pick_item(uint32_t picked_index) {
     uint32_t sleep_delay = SLEEP_PERIOD_MS[picked_index - ITEM_OPTIONS_START];
     settings_set_sleep(sleep_delay);
+    pwr_schedule_sleep();
     ui_mode_dispr_set(UI_MODE_SETTINGS);
 }
 

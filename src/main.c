@@ -14,6 +14,7 @@
 #include "display.h"
 #include "interfaces/buttons.h"
 #include "rtc.h"
+#include "power.h"
 #include "screens/scr_init.h"
 #include "mode/ui_mode.h"
 #include "mode/ui_mode_dispatcher.h"
@@ -90,12 +91,16 @@ int main() {
     ui_mode_dispr_init(&display);
     ui_mode_dispr_set(UI_MODE_MENU);
 
+    pwr_schedule_sleep();
+
     while (true) {
         tsd_dispatch_state();
 
         ui_mode_dispr_dispatch();
 
         display_flush();
+
+        pwr_sleep_tick();
     }
 
     return 0;

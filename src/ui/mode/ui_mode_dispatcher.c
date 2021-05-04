@@ -11,10 +11,10 @@
 #include "scr_set_time.h"
 #include "scr_set_sleep.h"
 #include "scr_construction.h"
+#include "../power.h"
 
 static UiMode_t s_mode = UI_MODE_NONE;
 static UiDisplay_t *s_display = NULL;
-static UiScreen_t *s_scr_current = NULL;
 
 static const UiScreen_t* const MODES_SCREENS[UI_MODE_COUNT] = {
         [UI_MODE_MENU] = &SCR_MENU,
@@ -56,6 +56,7 @@ void ui_mode_dispr_dispatch() {
 
     if (hmi_btn_has_event()) {
         HmiBtnEvent_t btn_event = hmi_btn_poll_event();
+        pwr_schedule_sleep();
         scr->handle_button(btn_event);
     }
 
