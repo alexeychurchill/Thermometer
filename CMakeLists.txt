@@ -83,6 +83,7 @@ set(
         SOURCES
         CMSIS/Device/ST/STM32F1xx/Source/gcc/startup_stm32f103xb.s
         CMSIS/Device/ST/STM32F1xx/Source/system_stm32f1xx.c
+        src/stm32f1_isr.c
         src/main.c
         src/poll_timer.c
         src/temp_sensor_dispatcher.c
