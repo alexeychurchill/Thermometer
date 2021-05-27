@@ -9,4 +9,8 @@ uint32_t settings_get_sleep();
 
 bool settings_set_sleep(uint32_t value);
 
+uint32_t settings_get_measure_period();
+
+bool settings_set_measure_period(uint32_t value);
+
 #endif //THERMOMETER_FLASH_SETTINGS_H
