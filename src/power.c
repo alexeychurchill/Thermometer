@@ -63,8 +63,12 @@ void pwr_sleep_tick() {
     // Reset this anyway..
     s_sleep_time = PWR_SLEEP_TIME_NONE;
     // Zzzzzz...
+    uint32_t wkup_period = settings_get_measure_period();
+    uint32_t wkup_rtc_alarm = rtc_get_time() + wkup_period;
+    rtc_set_alarm(wkup_rtc_alarm);
     pwr_sleep();
-    // WAKE UP!
+    // WAKE UP HERE!
+    rtc_remove_alarm();
 
     if (pwr_poll_alarm()) {
         // Woken up by RTC alarm interrupt -> background work

@@ -4,7 +4,7 @@
 // All ISRs should go here...
 
 void RTC_Alarm_IRQHandler() {
-    // TODO: Handle wakeup if sleeping & schedule measurement
+    // TODO: Change way of the RTC Alarm signalizing
     EXTI->PR |= EXTI_PR_PIF17;
     rtc_clear_alarm();
 }
