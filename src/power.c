@@ -12,6 +12,7 @@ static volatile uint32_t s_sleep_time = PWR_SLEEP_TIME_NONE;
 static volatile PwrState_t s_pwr_state = PWR_STATE_RUNNING;
 static volatile bool s_alarm_triggered = false;
 static volatile bool s_sleep_allowed = true;
+static volatile bool s_sleep_woke_up = false;
 
 void pwr_schedule_sleep() {
     uint32_t sleep_timeout = settings_get_sleep();
@@ -69,6 +70,7 @@ void pwr_sleep_tick() {
     pwr_sleep();
     // WAKE UP HERE!
     rtc_remove_alarm();
+    s_sleep_woke_up = true;
 
     if (pwr_poll_alarm()) {
         // Woken up by RTC alarm interrupt -> background work
@@ -98,6 +100,12 @@ bool pwr_poll_alarm() {
     bool alarm_triggered = s_alarm_triggered;
     s_alarm_triggered = false;
     return alarm_triggered;
+}
+
+bool pwr_poll_woke_up() {
+    bool woke_up = s_sleep_woke_up;
+    s_sleep_woke_up = false;
+    return woke_up;
 }
 
 PwrState_t pwr_state() {

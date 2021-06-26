@@ -17,6 +17,8 @@ void pwr_sleep();
 
 bool pwr_poll_alarm();
 
+bool pwr_poll_woke_up();
+
 PwrState_t pwr_state();
 
 void pwr_sleep_allow();
