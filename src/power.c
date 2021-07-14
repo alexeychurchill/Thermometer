@@ -10,6 +10,7 @@
 
 static volatile uint32_t s_sleep_time = PWR_SLEEP_TIME_NONE;
 static volatile PwrState_t s_pwr_state = PWR_STATE_RUNNING;
+static volatile PwrWkupSource_t s_wkup_source = PWR_WKUP_SOURCE_NONE;
 static volatile bool s_alarm_triggered = false;
 static volatile bool s_sleep_allowed = true;
 static volatile bool s_sleep_woke_up = false;
@@ -72,16 +73,28 @@ void pwr_sleep_tick() {
     rtc_remove_alarm();
     s_sleep_woke_up = true;
 
-    if (pwr_poll_alarm()) {
+    if (s_wkup_source == PWR_WKUP_SOURCE_ALARM) {
         // Woken up by RTC alarm interrupt -> background work
         s_pwr_state = PWR_STATE_BG_WORK;
         s_sleep_time = PWR_SLEEP_TIME_NONE;
-    } else if (hmi_btn_has_event()) {
+    } else if (s_wkup_source == PWR_WKUP_SOURCE_BUTTON) {
         // Woken up by button press (actually, EXTI under the hood)
         s_pwr_state = PWR_STATE_RUNNING;
         display_init();
         pwr_schedule_sleep();
     }
+
+    s_wkup_source = PWR_WKUP_SOURCE_NONE;
+}
+
+bool pwr_handle_wkup_isr(PwrWkupSource_t wkup_source) {
+    if (s_pwr_state != PWR_STATE_SLEEPING) {
+        return false;
+    }
+
+    rcc_setup_clocking();
+    s_wkup_source = wkup_source;
+    return true;
 }
 
 void pwr_sleep() {
@@ -92,8 +105,6 @@ void pwr_sleep() {
     s_pwr_state = PWR_STATE_SLEEPING;
 
     __WFI();
-
-    rcc_setup_clocking();
 }
 
 bool pwr_poll_alarm() {

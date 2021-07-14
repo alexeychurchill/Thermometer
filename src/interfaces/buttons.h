@@ -6,8 +6,8 @@
 
 
 typedef enum HmiBtn {
-    HMI_BTN_NONE,
-    HMI_BTN_LEFT,
+    HMI_BTN_NONE = 0xFFFFFFFFu,
+    HMI_BTN_LEFT = 0x0u,
     HMI_BTN_ENTER,
     HMI_BTN_RIGHT
 } HmiBtn_t;
@@ -25,8 +25,12 @@ typedef struct HmiBtnEvent {
 
 void hmi_btn_init();
 
-const bool hmi_btn_has_event();
+void hmi_btn_on_press(HmiBtn_t button);
 
-const HmiBtnEvent_t hmi_btn_poll_event();
+void hmi_btn_on_tick();
+
+bool hmi_btn_has_event();
+
+HmiBtnEvent_t hmi_btn_poll_event();
 
 #endif //THERMOMETER_BUTTONS_H
